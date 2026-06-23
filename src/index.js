@@ -13,14 +13,20 @@ const logger = require('./utils/logger');
 const OpportunityScorer = require('./services/opportunityScorer');
 const { WorkflowAutomation, WORKFLOW_TYPES } = require('./services/workflowAutomation');
 const DealRadarAgent = require('./agents/dealRadarAgent');
+const MarketMonitorAgent = require('./agents/marketMonitorAgent');
+const NewsAgent = require('./agents/newsAgent');
+const ClientIntelligenceAgent = require('./agents/clientIntelligenceAgent');
 
 // Initialize Express app for health checks
 const expressApp = express();
 const PORT = process.env.PORT || 3000;
 
-// Initialize services
+// Initialize services and agents
 const opportunityScorer = new OpportunityScorer();
 const workflowAutomation = new WorkflowAutomation();
+const marketMonitor = new MarketMonitorAgent();
+const newsAgent = new NewsAgent();
+const clientIntelligence = new ClientIntelligenceAgent();
 let dealRadarAgent = null;
 
 // Initialize Slack Bolt app
