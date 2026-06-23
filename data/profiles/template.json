@@ -1,0 +1,95 @@
+{
+  "profile_id": "company_template",
+  "company_name": "Company Name",
+  "aliases": [
+    "Alias 1",
+    "Alias 2",
+    "Stock Ticker"
+  ],
+  "ticker_symbol": "TICK",
+  "headquarters": {
+    "city": "City",
+    "state": "State",
+    "country": "Country"
+  },
+  "business_segments": [
+    {
+      "name": "Segment Name",
+      "description": "Description of business segment",
+      "priority": "high"
+    }
+  ],
+  "key_geographies": [
+    {
+      "region": "Region Name",
+      "operations": ["Operation 1", "Operation 2"],
+      "priority": "high"
+    }
+  ],
+  "strategic_priorities": [
+    "Priority 1",
+    "Priority 2",
+    "Priority 3"
+  ],
+  "relevant_ibm_offerings": [
+    {
+      "product": "IBM Product Name",
+      "use_cases": [
+        "Use case 1",
+        "Use case 2"
+      ],
+      "priority": "high"
+    }
+  ],
+  "ibm_relationship": {
+    "relationship_status": "prospect",
+    "active_contracts": [],
+    "key_contacts": [],
+    "account_team": {
+      "account_executive": "",
+      "technical_sales_leader": "",
+      "account_technical_leader": ""
+    },
+    "recent_engagements": []
+  },
+  "watchlist_topics": [
+    {
+      "topic": "Topic Name",
+      "keywords": ["keyword1", "keyword2", "keyword3"],
+      "priority": "high"
+    }
+  ],
+  "alert_thresholds": {
+    "capex_announcement_usd": 1000000000,
+    "acquisition_value_usd": 500000000,
+    "production_change_percent": 10,
+    "cybersecurity_incident": "any",
+    "executive_change": "C-level",
+    "earnings_surprise_percent": 5
+  },
+  "competitive_intelligence": {
+    "main_competitors": [],
+    "track_competitor_wins": true,
+    "track_technology_partnerships": true
+  },
+  "custom_filters": {
+    "exclude_topics": [],
+    "minimum_news_relevance_score": 60,
+    "preferred_news_sources": [
+      "Reuters",
+      "Bloomberg"
+    ]
+  },
+  "notification_preferences": {
+    "slack_channel": "#company-intelligence",
+    "email_digest": true,
+    "digest_frequency": "daily",
+    "urgent_alert_threshold": 85
+  },
+  "metadata": {
+    "created_date": "YYYY-MM-DD",
+    "last_updated": "YYYY-MM-DD",
+    "updated_by": "email@ibm.com",
+    "version": "1.0"
+  }
+}
