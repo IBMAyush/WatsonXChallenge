@@ -553,51 +553,43 @@
   }
   tick(); setInterval(tick, 1000);
 
-  /* ── SCROLL: Star Wars perspective suck-away ── */
+  /* ── SCROLL: IBM NEXUS suck-away (ported from React commit 77e292ca) ── */
   const heroInner = document.getElementById('heroInner');
   const heroTitle = document.getElementById('heroTitle');
 
-  // Tight perspective container — small value = extreme vanishing point
-  const perspWrap = document.createElement('div');
-  perspWrap.style.cssText = 'perspective:280px; perspective-origin:50% 120%; overflow:visible;';
-  heroTitle.parentNode.insertBefore(perspWrap, heroTitle);
-  perspWrap.appendChild(heroTitle);
+  // Wrap title in a positioned div so transform-origin:'center top' works independently
+  const titleWrap = document.createElement('div');
+  titleWrap.style.cssText = 'display:inline-block; will-change:transform,opacity,filter;';
+  heroTitle.style.transformOrigin = 'center top';
+  heroTitle.parentNode.insertBefore(titleWrap, heroTitle);
+  titleWrap.appendChild(heroTitle);
+
+  // Linear interpolation helper (mirrors Framer Motion useTransform)
+  function lerp(inputMin, inputMax, outputMin, outputMax, value) {
+    const t = Math.min(Math.max((value - inputMin) / (inputMax - inputMin), 0), 1);
+    return outputMin + t * (outputMax - outputMin);
+  }
 
   window.addEventListener('scroll', () => {
-    const y  = window.scrollY;
-    const vh = window.innerHeight;
+    const y = window.scrollY;
 
-    // Phase 1 (0 → 40vh): tilt + elongate massively
-    const tiltP = Math.min(y / (vh * 0.40), 1);
-    // Phase 2 (40vh → 72vh): rocket up vanishing point
-    const suckP = Math.max(0, (y - vh * 0.40) / (vh * 0.32));
+    // Title: stretches vertically then rockets upward and vanishes
+    const scaleY  = lerp(0, 220, 1, 2.8, y);
+    const titleY  = lerp(0, 380, 0, -340, y);
+    const opacity = lerp(160, 340, 1, 0, y);
+    const blur    = lerp(120, 340, 0, 12, y);
 
-    // smoothstep
-    const te = tiltP * tiltP * (3 - 2 * tiltP);
-    const sk = suckP * suckP * (3 - 2 * suckP);
+    titleWrap.style.transform = `translateY(${titleY}px) scaleY(${scaleY})`;
+    titleWrap.style.opacity   = opacity;
+    titleWrap.style.filter    = `blur(${blur}px)`;
 
-    const rotateX = te * 78;           // extreme tilt — 78° at peak
-    const scaleY  = 1 + te * 4.5;     // elongate to 5.5× tall
-    const scaleX  = 1 - te * 0.22;    // pinch narrow like perspective
-    const moveY   = -sk * vh * 1.4;   // shoot past top of viewport
-    const opacity = Math.max(0, 1 - sk * 2.5);
-    const blur    = sk * 32;
-    const glow    = 40 + te * 160;
-    const glowA   = 0.4 + te * 0.55;
-
-    // shift perspective origin down as it tilts so vanishing pt stays horizon
-    perspWrap.style.perspectiveOrigin = `50% ${120 - te * 80}%`;
-
-    heroTitle.style.transformOrigin = '50% 100%'; // anchor at bottom
-    heroTitle.style.transform = `translateY(${moveY}px) rotateX(${rotateX}deg) scaleY(${scaleY}) scaleX(${scaleX})`;
-    heroTitle.style.opacity   = opacity;
-    heroTitle.style.filter    = `drop-shadow(0 0 ${glow}px rgba(47,125,225,${glowA})) blur(${blur}px)`;
-
-    // everything else fades out faster
-    const restOp = Math.max(0, 1 - y / (vh * 0.38));
+    // Rest of hero fades + drifts up
+    const restY  = lerp(0, 500, 0, 120, y);
+    const restOp = lerp(0, 400, 1, 0, y);
     heroInner.querySelectorAll(':not(#heroTitle)').forEach(el => {
+      if (el === titleWrap) return;
       el.style.opacity   = restOp;
-      el.style.transform = `translateY(${-y * 0.15}px)`;
+      el.style.transform = `translateY(${restY}px)`;
     });
   }, { passive: true });
 
