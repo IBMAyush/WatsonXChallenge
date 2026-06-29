@@ -339,71 +339,88 @@
     .fade-up { opacity:0; transform:translateY(32px); transition:opacity .7s ease, transform .7s ease; }
     .fade-up.visible { opacity:1; transform:translateY(0); }
 
-    /* ─── SCROLL ANIMATIONS ─── */
+    /* ─── SCROLL-IN ANIMATIONS ─── */
 
-    /* Section headings: clip-reveal upward */
-    .reveal-heading {
-      overflow: hidden;
-    }
-    .reveal-heading > * {
-      display: block;
-      opacity: 0;
-      transform: translateY(60px);
-      transition: opacity .65s cubic-bezier(.22,1,.36,1), transform .65s cubic-bezier(.22,1,.36,1);
-    }
-    .reveal-heading.visible > * { opacity: 1; transform: translateY(0); }
-
-    /* Stat cards: fan in from below with stagger built into JS */
+    /* Stat cards: fan in from below */
     .stat-card {
       background: rgba(5,10,18,0.8);
       border:1px solid rgba(47,125,225,0.12);
       border-radius:10px; padding:24px 18px; text-align:center;
-      transition: border-color .3s, box-shadow .3s, opacity .6s ease, transform .6s cubic-bezier(.22,1,.36,1);
+      transition: border-color .3s, box-shadow .3s,
+                  opacity .6s ease, transform .6s cubic-bezier(.22,1,.36,1);
       opacity: 0;
-      transform: translateY(40px) scale(0.94);
+      transform: translateY(44px) scale(0.93);
     }
-    .stat-card.visible { opacity:1; transform:translateY(0) scale(1); }
+    .stat-card:nth-child(1) { transition-delay: 0ms; }
+    .stat-card:nth-child(2) { transition-delay: 100ms; }
+    .stat-card:nth-child(3) { transition-delay: 200ms; }
+    .stat-card:nth-child(4) { transition-delay: 300ms; }
+    .stat-card.in { opacity:1; transform:translateY(0) scale(1); }
     .stat-card:hover { border-color:rgba(47,125,225,0.35); box-shadow:0 0 30px rgba(47,125,225,0.08); }
 
-    /* Feature cards: alternate slide left/right */
+    /* Section labels: slide from left */
+    .label-animate {
+      opacity: 0; transform: translateX(-24px);
+      transition: opacity .5s ease, transform .5s ease;
+    }
+    .label-animate.in { opacity:1; transform:translateX(0); }
+
+    /* Horizontal rule reveal */
+    .hr-reveal {
+      width:0; height:1px; background:var(--accent); opacity:.4;
+      margin-bottom:16px;
+      transition: width .7s cubic-bezier(.22,1,.36,1);
+    }
+    .hr-reveal.in { width:56px; }
+
+    /* Section headings: lines slide up from clip */
+    .reveal-heading .rh-line {
+      display: block;
+      opacity: 0; transform: translateY(52px);
+      transition: opacity .6s cubic-bezier(.22,1,.36,1), transform .6s cubic-bezier(.22,1,.36,1);
+    }
+    .reveal-heading .rh-line:nth-child(2) { transition-delay: 110ms; }
+    .reveal-heading.in .rh-line { opacity:1; transform:translateY(0); }
+
+    /* Feature cards: alternate slide left / right */
     .feature-card {
       background: rgba(5,10,18,0.8);
       border:1px solid rgba(17,29,48,0.9); border-radius:10px; padding:20px;
-      transition: border-color .3s, box-shadow .3s, opacity .6s ease, transform .6s cubic-bezier(.22,1,.36,1);
+      transition: border-color .3s, box-shadow .3s,
+                  opacity .55s ease, transform .55s cubic-bezier(.22,1,.36,1);
       opacity: 0;
     }
-    .feature-card.from-left  { transform: translateX(-48px); }
-    .feature-card.from-right { transform: translateX(48px); }
-    .feature-card.from-below { transform: translateY(40px); }
-    .feature-card.visible    { opacity:1; transform:translate(0,0); }
+    .feature-card.from-left  { transform: translateX(-50px); }
+    .feature-card.from-right { transform: translateX(50px); }
+    .feature-card.in { opacity:1; transform:translate(0,0) !important; }
+    /* stagger each card slightly */
+    .features-grid .feature-card:nth-child(1) { transition-delay:  0ms; }
+    .features-grid .feature-card:nth-child(2) { transition-delay: 80ms; }
+    .features-grid .feature-card:nth-child(3) { transition-delay:160ms; }
+    .features-grid .feature-card:nth-child(4) { transition-delay:240ms; }
+    .features-grid .feature-card:nth-child(5) { transition-delay:320ms; }
+    .features-grid .feature-card:nth-child(6) { transition-delay:400ms; }
     .feature-card:hover { border-color:rgba(47,125,225,0.3); box-shadow:0 0 24px rgba(47,125,225,0.06); }
 
-    /* Feed rows: staggered slide-in from left like a terminal */
+    /* Feed rows: cascade in from left */
     .feed-row {
       display:flex; align-items:center; gap:14px; padding:13px 20px;
-      border-bottom:1px solid rgba(17,29,48,0.8); transition: background .2s, opacity .5s ease, transform .5s cubic-bezier(.22,1,.36,1);
-      opacity: 0;
-      transform: translateX(-32px);
+      border-bottom:1px solid rgba(17,29,48,0.8);
+      transition: background .2s, opacity .45s ease, transform .45s cubic-bezier(.22,1,.36,1);
+      opacity: 0; transform: translateX(-36px);
     }
     .feed-row:last-child { border-bottom:none; }
     .feed-row:hover { background:rgba(47,125,225,0.04); }
-    .feed-row.visible { opacity:1; transform:translateX(0); }
+    .feed-row.in { opacity:1; transform:translateX(0); }
 
-    /* CTA section: zoom-fade from below */
+    /* CTA: zoom-fade up */
     .cta-animate {
-      opacity: 0;
-      transform: translateY(48px) scale(0.97);
-      transition: opacity .75s cubic-bezier(.22,1,.36,1), transform .75s cubic-bezier(.22,1,.36,1);
+      opacity: 0; transform: translateY(50px) scale(0.96);
+      transition: opacity .7s cubic-bezier(.22,1,.36,1), transform .7s cubic-bezier(.22,1,.36,1);
     }
-    .cta-animate.visible { opacity:1; transform:translateY(0) scale(1); }
-
-    /* Section label: fade + slide in */
-    .label-animate {
-      opacity: 0;
-      transform: translateX(-20px);
-      transition: opacity .5s ease, transform .5s ease;
-    }
-    .label-animate.visible { opacity:1; transform:translateX(0); }
+    .cta-animate:nth-child(2) { transition-delay: 120ms; }
+    .cta-animate:nth-child(3) { transition-delay: 240ms; }
+    .cta-animate.in { opacity:1; transform:translateY(0) scale(1); }
 
     /* ─── KEYFRAMES ─── */
     @keyframes blink    { 0%,100%{opacity:1} 50%{opacity:.25} }
@@ -411,14 +428,6 @@
     @keyframes fadeInDown { from{opacity:0;transform:translateY(-16px)} to{opacity:1;transform:translateY(0)} }
     @keyframes fadeInUp   { from{opacity:0;transform:translateY(24px)}  to{opacity:1;transform:translateY(0)} }
     @keyframes counterUp  { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
-
-    /* Horizontal rule reveal */
-    .hr-reveal {
-      width:0; height:1px; background:var(--accent); opacity:.35;
-      margin-bottom:16px;
-      transition: width .8s cubic-bezier(.22,1,.36,1);
-    }
-    .hr-reveal.visible { width:60px; }
   </style>
 </head>
 <body>
@@ -498,7 +507,7 @@
     <div style="flex:1">
       <div class="hr-reveal"></div>
       <div class="section-label label-animate">Platform Features</div>
-      <h2 class="section-heading reveal-heading"><span>Built for</span><span class="accent" style="display:inline-block;transition-delay:.12s">Enterprise Scale.</span></h2>
+      <h2 class="section-heading reveal-heading"><span class="rh-line">Built for</span><span class="rh-line accent">Enterprise Scale.</span></h2>
       <p class="section-sub fade-up" style="transition-delay:.22s">Every capability engineered to IBM production standards — reliable, secure, and fast.</p>
       <div class="features-grid">
         <div class="feature-card from-left" ><div class="feature-title">&lt; 3s Response</div><div class="feature-desc">Sub-3-second AI answers across all four agents, even at 1,000 req/min peak load.</div></div>
@@ -519,7 +528,7 @@
     <div style="flex:1">
       <div class="hr-reveal"></div>
       <div class="section-label label-animate">Live Intelligence Feed</div>
-      <h2 class="section-heading reveal-heading"><span>Always On.</span><span class="accent" style="display:inline-block;transition-delay:.12s">Always Ahead.</span></h2>
+      <h2 class="section-heading reveal-heading"><span class="rh-line">Always On.</span><span class="rh-line accent">Always Ahead.</span></h2>
       <p class="section-sub fade-up" style="transition-delay:.22s">Every signal that matters, ranked by priority and delivered in real time.</p>
       <div class="feed-panel">
         <div class="feed-row"><span class="feed-prio p-CRITICAL">CRITICAL</span><span class="feed-text">ExxonMobil Q3 earnings beat est. by 12%</span><span class="feed-ago">2m ago</span></div>
@@ -671,57 +680,64 @@
 
   /* ── INTERSECTION OBSERVERS ── */
 
-  // Helper: fire counter animation on a stat val element
   function animateCounter(val) {
     const target = +val.dataset.target;
     if (!target) return;
     const suffix = val.dataset.suffix || '';
     let start = 0;
-    const dur = 1200;
     const step = ts => {
       if (!start) start = ts;
-      const p = Math.min((ts - start) / dur, 1);
+      const p = Math.min((ts - start) / 1200, 1);
       val.textContent = Math.round(p * target) + suffix;
       if (p < 1) requestAnimationFrame(step);
     };
     requestAnimationFrame(step);
   }
 
-  // Generic single-element observer
-  function observe(el, delay) {
+  // One observer per element; fires once when element is 25% visible
+  function watchIn(el, cls = 'in', thresh = 0.25) {
     new IntersectionObserver(([e], obs) => {
       if (!e.isIntersecting) return;
-      if (delay) el.style.transitionDelay = delay + 'ms';
-      el.classList.add('visible');
-      // counter
+      el.classList.add(cls);
       el.querySelectorAll('[data-target]').forEach(animateCounter);
       obs.disconnect();
-    }, { threshold: 0.12 }).observe(el);
+    }, { threshold: thresh }).observe(el);
   }
 
-  // --- fade-up (generic) ---
-  document.querySelectorAll('.fade-up').forEach(el => observe(el));
+  // fade-up (generic, existing class)
+  document.querySelectorAll('.fade-up').forEach(el => watchIn(el, 'visible', 0.2));
 
-  // --- stat cards: staggered fan-in ---
-  document.querySelectorAll('.stat-card').forEach((el, i) => observe(el, i * 100));
+  // stat cards — trigger all 4 at once when the grid is 20% visible
+  const statsGrid = document.querySelector('.stats-grid');
+  if (statsGrid) {
+    new IntersectionObserver(([e], obs) => {
+      if (!e.isIntersecting) return;
+      statsGrid.querySelectorAll('.stat-card').forEach(c => c.classList.add('in'));
+      statsGrid.querySelectorAll('[data-target]').forEach(animateCounter);
+      obs.disconnect();
+    }, { threshold: 0.2 }).observe(statsGrid);
+  }
 
-  // --- section labels: slide in from left ---
-  document.querySelectorAll('.label-animate').forEach(el => observe(el));
+  // section labels + hr-reveals
+  document.querySelectorAll('.label-animate, .hr-reveal').forEach(el => watchIn(el, 'in', 0.5));
 
-  // --- hr-reveal: expanding line ---
-  document.querySelectorAll('.hr-reveal').forEach(el => observe(el));
+  // section headings (reveal-heading wrapper)
+  document.querySelectorAll('.reveal-heading').forEach(el => watchIn(el, 'in', 0.3));
 
-  // --- section headings: clip-reveal (observe the wrapper) ---
-  document.querySelectorAll('.reveal-heading').forEach(el => observe(el));
+  // feature cards — stagger via CSS nth-child; fire when each is 15% visible
+  document.querySelectorAll('.feature-card').forEach(el => watchIn(el, 'in', 0.15));
 
-  // --- feature cards: alternating left/right with stagger ---
-  document.querySelectorAll('.feature-card').forEach((el, i) => observe(el, i * 80));
+  // feed rows — stagger via CSS; fire each row as it enters
+  document.querySelectorAll('.feed-row').forEach((el, i) => {
+    new IntersectionObserver(([e], obs) => {
+      if (!e.isIntersecting) return;
+      setTimeout(() => el.classList.add('in'), i * 65);
+      obs.disconnect();
+    }, { threshold: 0.5 }).observe(el);
+  });
 
-  // --- feed rows: cascade in like a terminal ---
-  document.querySelectorAll('.feed-row').forEach((el, i) => observe(el, i * 70));
-
-  // --- CTA section elements ---
-  document.querySelectorAll('.cta-animate').forEach(el => observe(el));
+  // CTA elements
+  document.querySelectorAll('.cta-animate').forEach(el => watchIn(el, 'in', 0.2));
 </script>
 </body>
 </html>
