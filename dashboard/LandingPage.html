@@ -335,9 +335,75 @@
     .footer-live { display:flex; align-items:center; gap:6px; }
     .footer-dot  { width:5px; height:5px; border-radius:50%; background:var(--bullish); animation:blink 1.4s ease-in-out infinite; }
 
-    /* ─── FADE-UP ─── */
+    /* ─── FADE-UP (base) ─── */
     .fade-up { opacity:0; transform:translateY(32px); transition:opacity .7s ease, transform .7s ease; }
     .fade-up.visible { opacity:1; transform:translateY(0); }
+
+    /* ─── SCROLL ANIMATIONS ─── */
+
+    /* Section headings: clip-reveal upward */
+    .reveal-heading {
+      overflow: hidden;
+    }
+    .reveal-heading > * {
+      display: block;
+      opacity: 0;
+      transform: translateY(60px);
+      transition: opacity .65s cubic-bezier(.22,1,.36,1), transform .65s cubic-bezier(.22,1,.36,1);
+    }
+    .reveal-heading.visible > * { opacity: 1; transform: translateY(0); }
+
+    /* Stat cards: fan in from below with stagger built into JS */
+    .stat-card {
+      background: rgba(5,10,18,0.8);
+      border:1px solid rgba(47,125,225,0.12);
+      border-radius:10px; padding:24px 18px; text-align:center;
+      transition: border-color .3s, box-shadow .3s, opacity .6s ease, transform .6s cubic-bezier(.22,1,.36,1);
+      opacity: 0;
+      transform: translateY(40px) scale(0.94);
+    }
+    .stat-card.visible { opacity:1; transform:translateY(0) scale(1); }
+    .stat-card:hover { border-color:rgba(47,125,225,0.35); box-shadow:0 0 30px rgba(47,125,225,0.08); }
+
+    /* Feature cards: alternate slide left/right */
+    .feature-card {
+      background: rgba(5,10,18,0.8);
+      border:1px solid rgba(17,29,48,0.9); border-radius:10px; padding:20px;
+      transition: border-color .3s, box-shadow .3s, opacity .6s ease, transform .6s cubic-bezier(.22,1,.36,1);
+      opacity: 0;
+    }
+    .feature-card.from-left  { transform: translateX(-48px); }
+    .feature-card.from-right { transform: translateX(48px); }
+    .feature-card.from-below { transform: translateY(40px); }
+    .feature-card.visible    { opacity:1; transform:translate(0,0); }
+    .feature-card:hover { border-color:rgba(47,125,225,0.3); box-shadow:0 0 24px rgba(47,125,225,0.06); }
+
+    /* Feed rows: staggered slide-in from left like a terminal */
+    .feed-row {
+      display:flex; align-items:center; gap:14px; padding:13px 20px;
+      border-bottom:1px solid rgba(17,29,48,0.8); transition: background .2s, opacity .5s ease, transform .5s cubic-bezier(.22,1,.36,1);
+      opacity: 0;
+      transform: translateX(-32px);
+    }
+    .feed-row:last-child { border-bottom:none; }
+    .feed-row:hover { background:rgba(47,125,225,0.04); }
+    .feed-row.visible { opacity:1; transform:translateX(0); }
+
+    /* CTA section: zoom-fade from below */
+    .cta-animate {
+      opacity: 0;
+      transform: translateY(48px) scale(0.97);
+      transition: opacity .75s cubic-bezier(.22,1,.36,1), transform .75s cubic-bezier(.22,1,.36,1);
+    }
+    .cta-animate.visible { opacity:1; transform:translateY(0) scale(1); }
+
+    /* Section label: fade + slide in */
+    .label-animate {
+      opacity: 0;
+      transform: translateX(-20px);
+      transition: opacity .5s ease, transform .5s ease;
+    }
+    .label-animate.visible { opacity:1; transform:translateX(0); }
 
     /* ─── KEYFRAMES ─── */
     @keyframes blink    { 0%,100%{opacity:1} 50%{opacity:.25} }
@@ -345,6 +411,14 @@
     @keyframes fadeInDown { from{opacity:0;transform:translateY(-16px)} to{opacity:1;transform:translateY(0)} }
     @keyframes fadeInUp   { from{opacity:0;transform:translateY(24px)}  to{opacity:1;transform:translateY(0)} }
     @keyframes counterUp  { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+
+    /* Horizontal rule reveal */
+    .hr-reveal {
+      width:0; height:1px; background:var(--accent); opacity:.35;
+      margin-bottom:16px;
+      transition: width .8s cubic-bezier(.22,1,.36,1);
+    }
+    .hr-reveal.visible { width:60px; }
   </style>
 </head>
 <body>
@@ -410,10 +484,10 @@
 <!-- STATS -->
 <div class="section" id="how">
   <div class="stats-grid">
-    <div class="stat-card fade-up">                             <div class="stat-val" data-target="10" data-suffix="+">0+</div><div class="stat-lbl">Hours saved / user / week</div></div>
-    <div class="stat-card fade-up" style="transition-delay:.08s"><div class="stat-val" data-target="70" data-suffix="%">0%</div><div class="stat-lbl">Faster deal response</div></div>
-    <div class="stat-card fade-up" style="transition-delay:.16s"><div class="stat-val" data-target="30" data-suffix="%">0%</div><div class="stat-lbl">Win-rate lift</div></div>
-    <div class="stat-card fade-up" style="transition-delay:.24s"><div class="stat-val" data-suffix="+">$5M+</div><div class="stat-lbl">Revenue potential</div></div>
+    <div class="stat-card"><div class="stat-val" data-target="10" data-suffix="+">0+</div><div class="stat-lbl">Hours saved / user / week</div></div>
+    <div class="stat-card"><div class="stat-val" data-target="70" data-suffix="%">0%</div><div class="stat-lbl">Faster deal response</div></div>
+    <div class="stat-card"><div class="stat-val" data-target="30" data-suffix="%">0%</div><div class="stat-lbl">Win-rate lift</div></div>
+    <div class="stat-card"><div class="stat-val" data-suffix="+">$5M+</div><div class="stat-lbl">Revenue potential</div></div>
   </div>
 </div>
 
@@ -422,16 +496,17 @@
   <div class="section-row">
     <div class="vert-text">Built for Enterprise Scale.</div>
     <div style="flex:1">
-      <div class="section-label">Platform Features</div>
-      <h2 class="section-heading fade-up">Built for<br><span class="accent">Enterprise Scale.</span></h2>
-      <p class="section-sub fade-up" style="transition-delay:.1s">Every capability engineered to IBM production standards — reliable, secure, and fast.</p>
+      <div class="hr-reveal"></div>
+      <div class="section-label label-animate">Platform Features</div>
+      <h2 class="section-heading reveal-heading"><span>Built for</span><span class="accent" style="display:inline-block;transition-delay:.12s">Enterprise Scale.</span></h2>
+      <p class="section-sub fade-up" style="transition-delay:.22s">Every capability engineered to IBM production standards — reliable, secure, and fast.</p>
       <div class="features-grid">
-        <div class="feature-card fade-up"><div class="feature-title">&lt; 3s Response</div><div class="feature-desc">Sub-3-second AI answers across all four agents, even at 1,000 req/min peak load.</div></div>
-        <div class="feature-card fade-up" style="transition-delay:.07s"><div class="feature-title">99.9% Uptime SLA</div><div class="feature-desc">Enterprise-grade IBM Cloud with redundant failover and full SOC 2 compliance.</div></div>
-        <div class="feature-card fade-up" style="transition-delay:.14s"><div class="feature-title">Slack-Native</div><div class="feature-desc">Eight natural-language slash commands — no context switching, no new tools.</div></div>
-        <div class="feature-card fade-up" style="transition-delay:.21s"><div class="feature-title">8-Factor Scoring</div><div class="feature-desc">Proprietary algorithm weighing market timing, deal size, relationship strength.</div></div>
-        <div class="feature-card fade-up" style="transition-delay:.28s"><div class="feature-title">Live Integrations</div><div class="feature-desc">Alpha Vantage, NewsAPI, Salesforce CRM, Watson NLP — wired together in real time.</div></div>
-        <div class="feature-card fade-up" style="transition-delay:.35s"><div class="feature-title">7 Auto-Workflows</div><div class="feature-desc">From opportunity detection to CRM update: seven end-to-end workflows run autonomously.</div></div>
+        <div class="feature-card from-left" ><div class="feature-title">&lt; 3s Response</div><div class="feature-desc">Sub-3-second AI answers across all four agents, even at 1,000 req/min peak load.</div></div>
+        <div class="feature-card from-right"><div class="feature-title">99.9% Uptime SLA</div><div class="feature-desc">Enterprise-grade IBM Cloud with redundant failover and full SOC 2 compliance.</div></div>
+        <div class="feature-card from-left" ><div class="feature-title">Slack-Native</div><div class="feature-desc">Eight natural-language slash commands — no context switching, no new tools.</div></div>
+        <div class="feature-card from-right"><div class="feature-title">8-Factor Scoring</div><div class="feature-desc">Proprietary algorithm weighing market timing, deal size, relationship strength.</div></div>
+        <div class="feature-card from-left" ><div class="feature-title">Live Integrations</div><div class="feature-desc">Alpha Vantage, NewsAPI, Salesforce CRM, Watson NLP — wired together in real time.</div></div>
+        <div class="feature-card from-right"><div class="feature-title">7 Auto-Workflows</div><div class="feature-desc">From opportunity detection to CRM update: seven end-to-end workflows run autonomously.</div></div>
       </div>
     </div>
   </div>
@@ -442,10 +517,11 @@
   <div class="section-row">
     <div class="vert-text">Always On. Always Ahead.</div>
     <div style="flex:1">
-      <div class="section-label">Live Intelligence Feed</div>
-      <h2 class="section-heading fade-up">Always On.<br><span class="accent">Always Ahead.</span></h2>
-      <p class="section-sub fade-up" style="transition-delay:.1s">Every signal that matters, ranked by priority and delivered in real time.</p>
-      <div class="feed-panel fade-up" style="transition-delay:.15s">
+      <div class="hr-reveal"></div>
+      <div class="section-label label-animate">Live Intelligence Feed</div>
+      <h2 class="section-heading reveal-heading"><span>Always On.</span><span class="accent" style="display:inline-block;transition-delay:.12s">Always Ahead.</span></h2>
+      <p class="section-sub fade-up" style="transition-delay:.22s">Every signal that matters, ranked by priority and delivered in real time.</p>
+      <div class="feed-panel">
         <div class="feed-row"><span class="feed-prio p-CRITICAL">CRITICAL</span><span class="feed-text">ExxonMobil Q3 earnings beat est. by 12%</span><span class="feed-ago">2m ago</span></div>
         <div class="feed-row"><span class="feed-prio p-HIGH">HIGH</span><span class="feed-text">Saudi Aramco increases CapEx guidance to $50B</span><span class="feed-ago">8m ago</span></div>
         <div class="feed-row"><span class="feed-prio p-MEDIUM">MEDIUM</span><span class="feed-text">Shell announces new LNG terminal in Singapore</span><span class="feed-ago">15m ago</span></div>
@@ -461,9 +537,9 @@
 
 <!-- BOTTOM CTA -->
 <div class="cta-section">
-  <h2 class="fade-up">Ready to launch?</h2>
-  <p class="fade-up" style="transition-delay:.1s">Step into the full intelligence dashboard and start closing deals faster.</p>
-  <a href="index.html" class="cta-primary fade-up" style="transition-delay:.2s;display:inline-flex;">
+  <h2 class="cta-animate">Ready to launch?</h2>
+  <p class="cta-animate" style="transition-delay:.12s">Step into the full intelligence dashboard and start closing deals faster.</p>
+  <a href="index.html" class="cta-primary cta-animate" style="transition-delay:.24s;display:inline-flex;">
     Launch Dashboard
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
   </a>
@@ -593,31 +669,59 @@
     });
   }, { passive: true });
 
-  /* ── INTERSECTION OBSERVER (fade-up + counter) ── */
-  const io = new IntersectionObserver(entries => {
-    entries.forEach(e => {
-      if (!e.isIntersecting) return;
-      e.target.classList.add('visible');
-      // counter animation for stat vals
-      const val = e.target.querySelector('[data-target]');
-      if (val) {
-        const target = +val.dataset.target;
-        const suffix = val.dataset.suffix || '';
-        let start = 0;
-        const dur = 1200;
-        const step = timestamp => {
-          if (!start) start = timestamp;
-          const p = Math.min((timestamp - start) / dur, 1);
-          val.textContent = Math.round(p * target) + suffix;
-          if (p < 1) requestAnimationFrame(step);
-        };
-        requestAnimationFrame(step);
-      }
-      io.unobserve(e.target);
-    });
-  }, { threshold: 0.12 });
+  /* ── INTERSECTION OBSERVERS ── */
 
-  document.querySelectorAll('.fade-up').forEach(el => io.observe(el));
+  // Helper: fire counter animation on a stat val element
+  function animateCounter(val) {
+    const target = +val.dataset.target;
+    if (!target) return;
+    const suffix = val.dataset.suffix || '';
+    let start = 0;
+    const dur = 1200;
+    const step = ts => {
+      if (!start) start = ts;
+      const p = Math.min((ts - start) / dur, 1);
+      val.textContent = Math.round(p * target) + suffix;
+      if (p < 1) requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
+  // Generic single-element observer
+  function observe(el, delay) {
+    new IntersectionObserver(([e], obs) => {
+      if (!e.isIntersecting) return;
+      if (delay) el.style.transitionDelay = delay + 'ms';
+      el.classList.add('visible');
+      // counter
+      el.querySelectorAll('[data-target]').forEach(animateCounter);
+      obs.disconnect();
+    }, { threshold: 0.12 }).observe(el);
+  }
+
+  // --- fade-up (generic) ---
+  document.querySelectorAll('.fade-up').forEach(el => observe(el));
+
+  // --- stat cards: staggered fan-in ---
+  document.querySelectorAll('.stat-card').forEach((el, i) => observe(el, i * 100));
+
+  // --- section labels: slide in from left ---
+  document.querySelectorAll('.label-animate').forEach(el => observe(el));
+
+  // --- hr-reveal: expanding line ---
+  document.querySelectorAll('.hr-reveal').forEach(el => observe(el));
+
+  // --- section headings: clip-reveal (observe the wrapper) ---
+  document.querySelectorAll('.reveal-heading').forEach(el => observe(el));
+
+  // --- feature cards: alternating left/right with stagger ---
+  document.querySelectorAll('.feature-card').forEach((el, i) => observe(el, i * 80));
+
+  // --- feed rows: cascade in like a terminal ---
+  document.querySelectorAll('.feed-row').forEach((el, i) => observe(el, i * 70));
+
+  // --- CTA section elements ---
+  document.querySelectorAll('.cta-animate').forEach(el => observe(el));
 </script>
 </body>
 </html>
