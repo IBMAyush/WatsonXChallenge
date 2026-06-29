@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Oil & Gas Intelligence — IBM</title>
+  <title>IBM Nexus — Oil & Gas Intelligence</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -609,14 +609,17 @@
     .scrollable::-webkit-scrollbar-track { background: transparent; }
     .scrollable::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
 
-    /* LIQUID LOGO PANEL */
-    #liquid-logo-frame {
-      width: 100%;
-      height: calc(100vh - 110px);
-      border: none;
-      border-radius: 10px;
-      display: block;
-    }
+    /* SLIDE-IN ANIMATIONS */
+    @keyframes slideInLeft  { from { opacity:0; transform:translateX(-32px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes slideInRight { from { opacity:0; transform:translateX( 32px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes slideInUp    { from { opacity:0; transform:translateY( 24px); } to { opacity:1; transform:translateY(0); } }
+    .slide-left  { animation: slideInLeft  .45s ease both; }
+    .slide-right { animation: slideInRight .45s ease both; }
+    .slide-up    { animation: slideInUp    .45s ease both; }
+    .d1 { animation-delay:.05s } .d2 { animation-delay:.10s } .d3 { animation-delay:.15s }
+    .d4 { animation-delay:.20s } .d5 { animation-delay:.25s } .d6 { animation-delay:.30s }
+    .d7 { animation-delay:.35s } .d8 { animation-delay:.40s }
+
   </style>
 </head>
 <body>
@@ -917,8 +920,8 @@
 <!-- HEADER -->
 <div class="header">
   <div class="header-left">
-    <div class="logo">🛢️ Oil&amp;<span>Gas</span> Intelligence</div>
-    <div class="badge">IBM BOBATHON</div>
+    <div class="logo">IBM <span>Nexus</span></div>
+    <div class="badge">IBM BOBATHON 2026</div>
   </div>
   <div class="header-right">
     <span><span class="status-dot" id="statusDot"></span><span class="status-text" id="statusText">Connecting...</span></span>
@@ -933,7 +936,6 @@
   <button class="nav-tab" onclick="switchTab('news', this)">News &amp; Intel</button>
   <button class="nav-tab" onclick="switchTab('opportunities', this)">Deal Radar</button>
   <button class="nav-tab" onclick="switchTab('digest', this)">Digest</button>
-  <button class="nav-tab" onclick="switchTab('liquid', this)">Liquid Logo</button>
 </div>
 
 <!-- MAIN -->
@@ -1055,15 +1057,9 @@
     </div>
   </div>
 
-  <!-- ===================== LIQUID LOGO ===================== -->
-  <div class="page" id="page-liquid">
-    <iframe id="liquid-logo-frame" src="liquid-logo/index.html" title="Liquid Logo"></iframe>
-  </div>
-
 </div>
 
 <script>
-  const API = 'http://localhost:3000';
   let allNews = [];
   let currentCompany = '';
 
@@ -1076,10 +1072,6 @@
     const map = { market:'tag-market', policy:'tag-policy', company:'tag-company', emissions:'tag-emissions', technology:'tag-tech' };
     return map[cat] || 'tag-market';
   }
-  function priorityLabel(p) {
-    const e = { CRITICAL:'🚨', URGENT:'⚠️', HIGH:'🔴', MEDIUM:'🟡', LOW:'🟢' };
-    return (e[p] || '') + ' ' + p;
-  }
   function timeAgo(ts) {
     const d = new Date(ts), now = new Date();
     const m = Math.round((now - d) / 60000);
@@ -1089,22 +1081,60 @@
     return Math.round(h / 24) + 'd ago';
   }
 
-  async function apiFetch(path) {
-    const r = await fetch(API + path);
-    if (!r.ok) throw new Error(r.statusText);
-    return r.json();
-  }
+  // ─── MOCK DATA ────────────────────────────────────────────
+  const MOCK = {
+    prices: [
+      { label:'WTI Crude',    val:'$82.40/bbl',   change:1.2  },
+      { label:'Brent Crude',  val:'$85.60/bbl',   change:0.9  },
+      { label:'Henry Hub Gas',val:'$2.84/MMBtu',  change:-0.4 },
+      { label:'Crack Spread', val:'$24.80/bbl',   change:0.6  },
+      { label:'Refinery Util.',val:'91.2%',        change:null },
+    ],
+    stats: [
+      { title:'WTI Crude',    value:'$82.40', sub:'per barrel',  change:1.2  },
+      { title:'Natural Gas',  value:'$2.84',  sub:'per MMBtu',   change:-0.4 },
+      { title:'US Rig Count', value:'588',    sub:'active rigs', change:3    },
+    ],
+    insights: [
+      { severity:'high',   message:'WTI prices up 1.2% — refinery capex cycle likely to accelerate',       ibmOpportunity:'Pitch IBM Maximo asset management to 3 Permian operators' },
+      { severity:'medium', message:'Shell LNG expansion signals $4B+ infrastructure spend',                 ibmOpportunity:'IBM Hybrid Cloud for operational data lakes' },
+      { severity:'high',   message:'ExxonMobil earnings beat by 12% — deal window open for 90 days',       ibmOpportunity:'IBM watsonx for predictive maintenance — $18M opportunity' },
+      { severity:'low',    message:'OPEC+ compliance at 94% — supply discipline holding through Q1 2025', ibmOpportunity:'No immediate action — monitor quarterly' },
+    ],
+    news: [
+      { title:'ExxonMobil Q3 earnings beat estimates by 12%, raises CapEx guidance', source:'Reuters', category:'company', ibmRelevance:91, sentiment:'positive' },
+      { title:'Saudi Aramco increases 2025 CapEx guidance to $50B amid expansion plans', source:'Bloomberg', category:'market', ibmRelevance:84, sentiment:'positive' },
+      { title:'Shell green-lights $4.1B LNG terminal expansion in Singapore', source:'FT', category:'company', ibmRelevance:88, sentiment:'positive' },
+      { title:'OPEC+ maintains production cuts through Q1 2025 — supply tight', source:'OilPrice.com', category:'policy', ibmRelevance:72, sentiment:'neutral' },
+      { title:'Chevron acquires $6.3B deepwater asset in Gulf of Mexico', source:'WSJ', category:'company', ibmRelevance:95, sentiment:'positive' },
+      { title:'BP activist investor stake reaches 8.2% — restructure pressure mounts', source:'FT', category:'company', ibmRelevance:76, sentiment:'negative' },
+      { title:'ConocoPhillips closes $22B Permian Basin asset acquisition', source:'Reuters', category:'company', ibmRelevance:89, sentiment:'positive' },
+      { title:'Halliburton wins $4B North Sea services contract from Equinor', source:'Bloomberg', category:'company', ibmRelevance:82, sentiment:'positive' },
+      { title:'US shale output hits record 13.4M bpd — Permian driving growth', source:'EIA', category:'market', ibmRelevance:79, sentiment:'positive' },
+      { title:'EU carbon border levy to hit refinery margins by est. 3.2%', source:'Reuters', category:'emissions', ibmRelevance:68, sentiment:'negative' },
+    ],
+    opps: [
+      { opportunity:{ title:'ExxonMobil Permian Digital Twin Initiative',    client:'ExxonMobil',      estimatedValue:18000000, businessSegment:'Digital Transformation' }, scoring:{ priority:'CRITICAL', totalScore:94, recommendation:['Schedule exec briefing this week','Prepare watsonx demo for predictive maintenance'] }, detectedAt: Date.now()-120000  },
+      { opportunity:{ title:'Shell LNG Terminal Operations Platform',         client:'Shell plc',       estimatedValue:12000000, businessSegment:'Hybrid Cloud' },           scoring:{ priority:'HIGH',     totalScore:87, recommendation:['Engage LNG ops team','Propose IBM Cloud for real-time sensor analytics'] }, detectedAt: Date.now()-480000  },
+      { opportunity:{ title:'Chevron Deepwater Asset Integration',            client:'Chevron Corp',    estimatedValue:9500000,  businessSegment:'Data & AI' },              scoring:{ priority:'HIGH',     totalScore:83, recommendation:['Submit RFI by Friday','Leverage existing Chevron relationship'] }, detectedAt: Date.now()-1320000 },
+      { opportunity:{ title:'BP Refinery Emissions Compliance Platform',      client:'BP Global',       estimatedValue:7200000,  businessSegment:'Sustainability' },         scoring:{ priority:'URGENT',   totalScore:79, recommendation:['Connect with sustainability VP','Propose IBM Environmental Intelligence Suite'] }, detectedAt: Date.now()-2460000 },
+      { opportunity:{ title:'ConocoPhillips Permian Integration Middleware',  client:'ConocoPhillips',  estimatedValue:6800000,  businessSegment:'Integration' },            scoring:{ priority:'HIGH',     totalScore:77, recommendation:['Schedule discovery call','IBM App Connect proposal ready'] }, detectedAt: Date.now()-3480000 },
+      { opportunity:{ title:'Halliburton Field Service AI Optimization',      client:'Halliburton',     estimatedValue:5400000,  businessSegment:'AI & Automation' },        scoring:{ priority:'MEDIUM',   totalScore:71, recommendation:['Share SLB case study','Propose watsonx field assistant POC'] }, detectedAt: Date.now()-4920000 },
+    ],
+    market: {
+      summary: 'Energy markets remain elevated amid continued OPEC+ discipline and stronger-than-expected demand from Asia. WTI trading near 6-month highs. Refinery utilization at 91.2% signals tight product supply heading into Q1. IBM sales window is open — three Tier 1 accounts have active budget cycles.',
+      ibmRelevance: [
+        { condition:'WTI > $80 triggers CapEx acceleration at Permian operators', ibmSolution:'IBM Maximo Application Suite', rationale:'Asset-heavy operators prioritize predictive maintenance spend' },
+        { condition:'LNG expansion signals operational complexity spike', ibmSolution:'IBM Hybrid Cloud + Watson', rationale:'Real-time sensor data integration across distributed assets' },
+        { condition:'Emissions compliance pressure across EU-exposed refiners', ibmSolution:'IBM Environmental Intelligence Suite', rationale:'Carbon reporting and compliance automation at scale' },
+      ],
+    },
+  };
 
   // ─── STATUS ──────────────────────────────────────────────
-  async function checkStatus() {
-    try {
-      await apiFetch('/health');
-      document.getElementById('statusDot').style.background = 'var(--green)';
-      document.getElementById('statusText').textContent = 'API Live';
-    } catch {
-      document.getElementById('statusDot').style.background = 'var(--red)';
-      document.getElementById('statusText').textContent = 'API Offline';
-    }
+  function checkStatus() {
+    document.getElementById('statusDot').style.background = 'var(--green)';
+    document.getElementById('statusText').textContent = 'Live (Demo)';
   }
 
   // ─── TAB SWITCHING ───────────────────────────────────────
@@ -1117,178 +1147,91 @@
   }
 
   function loadTab(tab) {
-    if (tab === 'overview') loadOverview();
-    if (tab === 'market') loadMarket();
-    if (tab === 'news') loadNews('');
+    if (tab === 'overview')      loadOverview();
+    if (tab === 'market')        loadMarket();
+    if (tab === 'news')          loadNews('');
     if (tab === 'opportunities') loadOpportunities();
-    if (tab === 'digest') loadDigest();
-    // 'liquid' tab is a static iframe — no load needed
+    if (tab === 'digest')        loadDigest();
   }
 
   function refreshAll() {
     const active = document.querySelector('.page.active');
-    const tab = active.id.replace('page-', '');
-    loadTab(tab);
+    loadTab(active.id.replace('page-', ''));
     checkStatus();
   }
 
   // ─── OVERVIEW ────────────────────────────────────────────
-  async function loadOverview() {
-    try {
-      const [marketRes, newsRes, oppRes] = await Promise.all([
-        apiFetch('/api/market-monitor'),
-        apiFetch('/api/news/top?limit=5'),
-        apiFetch('/api/opportunities?limit=5')
-      ]);
+  function loadOverview() {
+    document.getElementById('overview-stats').innerHTML = MOCK.stats.map((s,i) => `
+      <div class="card slide-left d${i+1}">
+        <div class="card-title">${s.title}</div>
+        <div class="stat-value">${ s.title==='US Rig Count' ? s.value : '$'+s.value }</div>
+        <div class="stat-sub">${s.sub}</div>
+        <div class="stat-change ${changeClass(s.change)}">${changeArrow(s.change)} ${Math.abs(s.change)}${s.title==='US Rig Count'?' this week':'%'}</div>
+      </div>`).join('');
 
-      const m = marketRes.data;
-      const news = newsRes.data;
-      const opps = oppRes.data;
+    document.getElementById('overview-prices').innerHTML = MOCK.prices.map((p,i) =>
+      `<div class="slide-up d${i+1}">${priceRow(p.label, p.val, p.change)}</div>`).join('');
 
-      // Stats
-      document.getElementById('overview-stats').innerHTML = `
-        <div class="card">
-          <div class="card-title">WTI Crude</div>
-          <div class="stat-value">$${fmt(m.data.crudeOil.wti.price)}</div>
-          <div class="stat-sub">per barrel</div>
-          <div class="stat-change ${changeClass(m.data.crudeOil.wti.changePercent)}">
-            ${changeArrow(m.data.crudeOil.wti.changePercent)} ${fmt(Math.abs(m.data.crudeOil.wti.changePercent))}%
-          </div>
+    document.getElementById('overview-insights').innerHTML = MOCK.insights.map((ins,i) => `
+      <div class="insight-item slide-right d${i+1}">
+        <div class="insight-dot ${ins.severity}"></div>
+        <div>
+          <div class="insight-text">${ins.message}</div>
+          <div class="insight-ibm">→ ${ins.ibmOpportunity}</div>
         </div>
-        <div class="card">
-          <div class="card-title">Natural Gas</div>
-          <div class="stat-value">$${fmt(m.data.naturalGas.henryHub.price)}</div>
-          <div class="stat-sub">per MMBtu</div>
-          <div class="stat-change ${changeClass(m.data.naturalGas.henryHub.changePercent)}">
-            ${changeArrow(m.data.naturalGas.henryHub.changePercent)} ${fmt(Math.abs(m.data.naturalGas.henryHub.changePercent))}%
-          </div>
-        </div>
-        <div class="card">
-          <div class="card-title">US Rig Count</div>
-          <div class="stat-value">${m.data.rigCount.total}</div>
-          <div class="stat-sub">active rigs</div>
-          <div class="stat-change ${changeClass(m.data.rigCount.change)}">
-            ${changeArrow(m.data.rigCount.change)} ${Math.abs(m.data.rigCount.change)} this week
-          </div>
-        </div>
-      `;
+      </div>`).join('');
 
-      // Prices
-      const brent = m.data.crudeOil.brent;
-      document.getElementById('overview-prices').innerHTML = `
-        ${priceRow('WTI Crude', '$'+fmt(m.data.crudeOil.wti.price)+'/bbl', m.data.crudeOil.wti.changePercent)}
-        ${priceRow('Brent Crude', '$'+fmt(brent.price)+'/bbl', brent.changePercent)}
-        ${priceRow('Henry Hub Gas', '$'+fmt(m.data.naturalGas.henryHub.price)+'/MMBtu', m.data.naturalGas.henryHub.changePercent)}
-        ${priceRow('Crack Spread', '$'+fmt(m.data.refiningMargins.crackSpread.value)+'/bbl', m.data.refiningMargins.crackSpread.change)}
-        ${priceRow('Refinery Util.', m.data.refiningMargins.utilizationRate+'%', null)}
-      `;
+    document.getElementById('overview-news').innerHTML = MOCK.news.slice(0,5).map((s,i) =>
+      `<div class="slide-right d${i+1}">${newsItem(s)}</div>`).join('');
 
-      // Insights
-      const insights = (m.insights || []).slice(0, 4);
-      document.getElementById('overview-insights').innerHTML = insights.length ? insights.map(i => `
-        <div class="insight-item">
-          <div class="insight-dot ${i.severity}"></div>
-          <div>
-            <div class="insight-text">${i.message}</div>
-            <div class="insight-ibm">→ ${i.ibmOpportunity}</div>
-          </div>
-        </div>
-      `).join('') : '<div class="loading">No insights available</div>';
-
-      // News
-      const stories = news.stories || [];
-      document.getElementById('overview-news').innerHTML = stories.map(s => newsItem(s)).join('') || '<div class="loading">No news</div>';
-
-      // Opps
-      document.getElementById('overview-opps').innerHTML = (opps || []).map(o => oppItem(o)).join('') || '<div class="loading">No opportunities detected</div>';
-
-    } catch(e) {
-      document.getElementById('overview-stats').innerHTML = `<div class="card"><div class="error-msg">Error: ${e.message}</div></div>`;
-    }
+    document.getElementById('overview-opps').innerHTML = MOCK.opps.slice(0,4).map((o,i) =>
+      `<div class="slide-left d${i+1}">${oppItem(o)}</div>`).join('');
   }
 
   // ─── MARKET ──────────────────────────────────────────────
-  async function loadMarket() {
-    try {
-      const res = await apiFetch('/api/market-monitor');
-      const m = res.data;
-      const d = m.data;
+  function loadMarket() {
+    document.getElementById('market-stats').innerHTML = `
+      <div class="card slide-left d1"><div class="card-title">Brent Crude</div><div class="stat-value">$85.60</div><div class="stat-sub">per barrel</div><div class="stat-change up">▲ 0.90%</div></div>
+      <div class="card slide-left d2"><div class="card-title">OPEC+ Compliance</div><div class="stat-value">94%</div><div class="stat-sub">production adherence</div></div>
+      <div class="card slide-left d3"><div class="card-title">Crude Inventory</div><div class="stat-value">421M</div><div class="stat-sub">barrels</div></div>`;
 
-      document.getElementById('market-stats').innerHTML = `
-        <div class="card">
-          <div class="card-title">Brent Crude</div>
-          <div class="stat-value">$${fmt(d.crudeOil.brent.price)}</div>
-          <div class="stat-sub">per barrel</div>
-          <div class="stat-change ${changeClass(d.crudeOil.brent.changePercent)}">
-            ${changeArrow(d.crudeOil.brent.changePercent)} ${fmt(Math.abs(d.crudeOil.brent.changePercent))}%
-          </div>
+    document.getElementById('market-crude').innerHTML = [
+      priceRow('WTI',   '$82.40/bbl', 1.2),
+      priceRow('Brent', '$85.60/bbl', 0.9),
+      scoreBar('WTI Momentum',   1.2, 10),
+      scoreBar('Brent Momentum', 0.9, 10),
+    ].map((h,i) => `<div class="slide-left d${i+1}">${h}</div>`).join('');
+
+    document.getElementById('market-gas').innerHTML = [
+      priceRow('Henry Hub',       '$2.84/MMBtu', -0.4),
+      priceRow('Crack Spread',    '$24.80/bbl',   0.6),
+      priceRow('Utilization Rate','91.2%',         null),
+      priceRow('Oil Rigs',        '488 active',    null),
+      priceRow('Gas Rigs',        '100 active',    null),
+    ].map((h,i) => `<div class="slide-right d${i+1}">${h}</div>`).join('');
+
+    document.getElementById('market-ibm').innerHTML = MOCK.market.ibmRelevance.map((r,i) => `
+      <div class="insight-item slide-up d${i+1}">
+        <div class="insight-dot medium"></div>
+        <div>
+          <div class="insight-text">${r.condition}</div>
+          <div class="insight-ibm">💡 ${r.ibmSolution} — ${r.rationale}</div>
         </div>
-        <div class="card">
-          <div class="card-title">OPEC+ Compliance</div>
-          <div class="stat-value">${d.opecCompliance ? d.opecCompliance.complianceRate : '—'}%</div>
-          <div class="stat-sub">production adherence</div>
-        </div>
-        <div class="card">
-          <div class="card-title">Crude Inventory</div>
-          <div class="stat-value">${d.inventoryLevels ? (d.inventoryLevels.crude/1000000).toFixed(0) : '—'}M</div>
-          <div class="stat-sub">barrels</div>
-        </div>
-      `;
+      </div>`).join('');
 
-      document.getElementById('market-crude').innerHTML = `
-        ${priceRow('WTI', '$'+fmt(d.crudeOil.wti.price)+'/bbl', d.crudeOil.wti.changePercent)}
-        ${priceRow('Brent', '$'+fmt(d.crudeOil.brent.price)+'/bbl', d.crudeOil.brent.changePercent)}
-        ${scoreBar('WTI Change', Math.abs(d.crudeOil.wti.changePercent), 10)}
-        ${scoreBar('Brent Change', Math.abs(d.crudeOil.brent.changePercent), 10)}
-      `;
-
-      document.getElementById('market-gas').innerHTML = `
-        ${priceRow('Henry Hub', '$'+fmt(d.naturalGas.henryHub.price)+'/MMBtu', d.naturalGas.henryHub.changePercent)}
-        ${priceRow('Crack Spread', '$'+fmt(d.refiningMargins.crackSpread.value)+'/bbl', d.refiningMargins.crackSpread.change)}
-        ${priceRow('Utilization Rate', d.refiningMargins.utilizationRate+'%', null)}
-        ${priceRow('Oil Rigs', d.rigCount.oil+' active', null)}
-        ${priceRow('Gas Rigs', d.rigCount.gas+' active', null)}
-      `;
-
-      const relevance = m.ibmRelevance || [];
-      document.getElementById('market-ibm').innerHTML = relevance.length ? relevance.map(r => `
-        <div class="insight-item">
-          <div class="insight-dot medium"></div>
-          <div>
-            <div class="insight-text">${r.condition}</div>
-            <div class="insight-ibm">💡 ${r.ibmSolution} — ${r.rationale}</div>
-          </div>
-        </div>
-      `).join('') : '<div class="loading">No relevance data</div>';
-
-      document.getElementById('market-summary').textContent = m.summary || '';
-      document.getElementById('market-timestamp').textContent = 'Last updated: ' + new Date(d.lastUpdate || Date.now()).toLocaleString();
-
-    } catch(e) {
-      document.getElementById('market-stats').innerHTML = `<div class="card"><div class="error-msg">Error: ${e.message}</div></div>`;
-    }
+    document.getElementById('market-summary').textContent = MOCK.market.summary;
+    document.getElementById('market-timestamp').textContent = 'Last updated: ' + new Date().toLocaleString();
   }
 
   // ─── NEWS ─────────────────────────────────────────────────
-  async function loadNews(company) {
+  function loadNews(company) {
     currentCompany = company;
-    const titleEl = document.getElementById('news-section-title');
-    document.getElementById('news-list').innerHTML = '<div class="loading">Loading...</div>';
-    try {
-      let res;
-      if (company) {
-        res = await apiFetch('/api/news/company/' + encodeURIComponent(company) + '?limit=20');
-        allNews = res.data.articles || [];
-        titleEl.textContent = company + ' News';
-      } else {
-        res = await apiFetch('/api/news/top?limit=20');
-        allNews = res.data.stories || [];
-        titleEl.textContent = 'Top Stories';
-      }
-      renderNews(allNews);
-    } catch(e) {
-      document.getElementById('news-list').innerHTML = `<div class="error-msg">Error: ${e.message}</div>`;
-    }
+    allNews = company
+      ? MOCK.news.filter(n => n.title.toLowerCase().includes(company.toLowerCase()) || n.source.toLowerCase().includes(company.toLowerCase()))
+      : MOCK.news;
+    document.getElementById('news-section-title').textContent = company ? company + ' News' : 'Top Stories';
+    renderNews(allNews);
   }
 
   function filterCompany(company, btn) {
@@ -1300,121 +1243,73 @@
 
   function filterNews() {
     const q = document.getElementById('news-search').value.toLowerCase();
-    if (!q) { renderNews(allNews); return; }
-    renderNews(allNews.filter(n => (n.title||'').toLowerCase().includes(q) || (n.summary||'').toLowerCase().includes(q)));
+    renderNews(q ? allNews.filter(n => n.title.toLowerCase().includes(q)) : allNews);
   }
 
   function renderNews(items) {
     document.getElementById('news-count').textContent = items.length + ' articles';
     document.getElementById('news-list').innerHTML = items.length
-      ? items.map(s => newsItem(s)).join('')
+      ? items.map((s,i) => `<div class="slide-right d${Math.min(i+1,8)}">${newsItem(s)}</div>`).join('')
       : '<div class="loading">No articles found</div>';
   }
 
   // ─── OPPORTUNITIES ────────────────────────────────────────
-  async function loadOpportunities() {
-    try {
-      const [oppRes, statusRes] = await Promise.all([
-        apiFetch('/api/opportunities?limit=20'),
-        apiFetch('/api/opportunities/status')
-      ]);
-      const opps = oppRes.data || [];
-      const status = statusRes.data;
+  function loadOpportunities() {
+    const opps = MOCK.opps;
+    const critical = opps.filter(o => o.scoring.priority === 'CRITICAL').length;
+    const urgent   = opps.filter(o => o.scoring.priority === 'URGENT').length;
 
-      const critical = opps.filter(o => o.scoring && o.scoring.priority === 'CRITICAL').length;
-      const urgent = opps.filter(o => o.scoring && o.scoring.priority === 'URGENT').length;
-      const high = opps.filter(o => o.scoring && o.scoring.priority === 'HIGH').length;
+    document.getElementById('opp-stats').innerHTML = `
+      <div class="card slide-left d1"><div class="card-title">Total Detected</div><div class="stat-value">${opps.length}</div><div class="stat-sub">opportunities</div></div>
+      <div class="card slide-left d2"><div class="card-title">Critical / Urgent</div><div class="stat-value" style="color:var(--red)">${critical+urgent}</div><div class="stat-sub">${critical} critical · ${urgent} urgent</div></div>
+      <div class="card slide-left d3"><div class="card-title">Radar Status</div><div class="stat-value" style="font-size:18px;color:var(--green)">● Active</div><div class="stat-sub">threshold: 80+ = critical</div></div>`;
 
-      document.getElementById('opp-stats').innerHTML = `
-        <div class="card">
-          <div class="card-title">Total Detected</div>
-          <div class="stat-value">${opps.length}</div>
-          <div class="stat-sub">opportunities</div>
-        </div>
-        <div class="card">
-          <div class="card-title">Critical / Urgent</div>
-          <div class="stat-value" style="color:var(--red)">${critical + urgent}</div>
-          <div class="stat-sub">${critical} critical · ${urgent} urgent</div>
-        </div>
-        <div class="card">
-          <div class="card-title">Radar Status</div>
-          <div class="stat-value" style="font-size:18px; color:var(--green)">${status.isMonitoring ? '● Active' : '○ Standby'}</div>
-          <div class="stat-sub">threshold: ${status.alertThresholds ? status.alertThresholds.critical : '—'}+ = critical</div>
-        </div>
-      `;
-
-      document.getElementById('opp-count').textContent = opps.length + ' total';
-      document.getElementById('opp-list').innerHTML = opps.length
-        ? opps.map(o => oppItem(o)).join('')
-        : '<div class="loading">No opportunities detected yet — Deal Radar is scanning...</div>';
-
-    } catch(e) {
-      document.getElementById('opp-stats').innerHTML = `<div class="card"><div class="error-msg">Error: ${e.message}</div></div>`;
-    }
+    document.getElementById('opp-count').textContent = opps.length + ' total';
+    document.getElementById('opp-list').innerHTML = opps.map((o,i) =>
+      `<div class="slide-left d${Math.min(i+1,8)}">${oppItem(o)}</div>`).join('');
   }
 
   // ─── DIGEST ───────────────────────────────────────────────
-  async function loadDigest() {
+  function loadDigest() {
     const company = document.getElementById('digest-company').value;
-    document.getElementById('digest-content').innerHTML = '<div class="loading">Generating digest...</div>';
-    try {
-      const url = '/api/intelligence-digest' + (company ? '?company=' + encodeURIComponent(company) : '');
-      const res = await apiFetch(url);
-      const d = res.data;
-      const m = d.marketMonitor;
-      const news = d.topNews;
-      const opps = d.opportunities || [];
+    const filteredNews = company
+      ? MOCK.news.filter(n => n.title.toLowerCase().includes(company.toLowerCase()))
+      : MOCK.news.slice(0,5);
+    const filteredOpps = company
+      ? MOCK.opps.filter(o => (o.opportunity.client||'').toLowerCase().includes(company.toLowerCase()))
+      : MOCK.opps.slice(0,4);
 
-      let html = `
-        <div class="digest-section">
-          <div class="digest-label">Market Snapshot</div>
-          <div style="color:var(--muted); font-size:13px; line-height:1.7">${m.summary}</div>
-          <div style="display:flex; gap:24px; margin-top:12px; flex-wrap:wrap">
-            <div><span style="color:var(--muted); font-size:11px">WTI</span><br><strong>$${fmt(m.data.crudeOil.wti.price)}</strong></div>
-            <div><span style="color:var(--muted); font-size:11px">Brent</span><br><strong>$${fmt(m.data.crudeOil.brent.price)}</strong></div>
-            <div><span style="color:var(--muted); font-size:11px">Nat Gas</span><br><strong>$${fmt(m.data.naturalGas.henryHub.price)}</strong></div>
-            <div><span style="color:var(--muted); font-size:11px">Rig Count</span><br><strong>${m.data.rigCount.total}</strong></div>
-          </div>
+    document.getElementById('digest-content').innerHTML = `
+      <div class="digest-section slide-left">
+        <div class="digest-label">Market Snapshot</div>
+        <div style="color:var(--muted);font-size:13px;line-height:1.7">${MOCK.market.summary}</div>
+        <div style="display:flex;gap:24px;margin-top:12px;flex-wrap:wrap">
+          <div><span style="color:var(--muted);font-size:11px">WTI</span><br><strong>$82.40</strong></div>
+          <div><span style="color:var(--muted);font-size:11px">Brent</span><br><strong>$85.60</strong></div>
+          <div><span style="color:var(--muted);font-size:11px">Nat Gas</span><br><strong>$2.84</strong></div>
+          <div><span style="color:var(--muted);font-size:11px">Rig Count</span><br><strong>588</strong></div>
         </div>
-        <div class="digest-section">
-          <div class="digest-label">Top News (${(news.stories||[]).length} stories)</div>
-          ${(news.stories||[]).slice(0,5).map(s => newsItem(s)).join('')}
-        </div>
-        <div class="digest-section">
-          <div class="digest-label">Deal Radar (${opps.length} opportunities)</div>
-          ${opps.slice(0,5).map(o => oppItem(o)).join('') || '<div class="loading">No opportunities</div>'}
-        </div>
-      `;
-
-      if (d.companyNews) {
-        html += `
-          <div class="digest-section">
-            <div class="digest-label">${company} — Company News (${(d.companyNews.articles||[]).length} articles)</div>
-            ${(d.companyNews.articles||[]).slice(0,5).map(s => newsItem(s)).join('')}
-          </div>
-        `;
-      }
-
-      html += `<div class="timestamp">Generated: ${new Date(d.timestamp).toLocaleString()}</div>`;
-      document.getElementById('digest-content').innerHTML = html;
-
-    } catch(e) {
-      document.getElementById('digest-content').innerHTML = `<div class="error-msg">Error: ${e.message}</div>`;
-    }
+      </div>
+      <div class="digest-section slide-right d2">
+        <div class="digest-label">Top News (${filteredNews.length} stories)</div>
+        ${filteredNews.map(s => newsItem(s)).join('')}
+      </div>
+      <div class="digest-section slide-left d3">
+        <div class="digest-label">Deal Radar (${filteredOpps.length} opportunities)</div>
+        ${filteredOpps.map(o => oppItem(o)).join('') || '<div class="loading">No opportunities</div>'}
+      </div>
+      <div class="timestamp">Generated: ${new Date().toLocaleString()} · Demo Mode</div>`;
   }
 
   // ─── COMPONENT HELPERS ───────────────────────────────────
   function priceRow(label, val, change) {
-    const cls = change !== null && change !== undefined ? changeClass(change) : '';
     const badge = change !== null && change !== undefined
       ? `<span class="price-change ${changeClass(change)}">${changeArrow(change)} ${fmt(Math.abs(change))}%</span>`
       : '';
     return `
       <div class="price-row">
         <span class="price-label">${label}</span>
-        <span style="display:flex; align-items:center; gap:8px">
-          <span class="price-val">${val}</span>${badge}
-        </span>
+        <span style="display:flex;align-items:center;gap:8px"><span class="price-val">${val}</span>${badge}</span>
       </div>`;
   }
 
@@ -1424,14 +1319,13 @@
       <div class="score-bar-row">
         <span class="score-bar-label">${label}</span>
         <div class="score-bar-track"><div class="score-bar-fill" style="width:${pct}%"></div></div>
-        <span class="score-bar-val">${fmt(val, 1)}</span>
+        <span class="score-bar-val">${fmt(val,1)}</span>
       </div>`;
   }
 
   function newsItem(s) {
     const cat = s.category || 'market';
     const ibm = s.ibmRelevance ? `<span class="ibm-score">IBM relevance: ${s.ibmRelevance}/100</span>` : '';
-    const cred = s.credibilityScore ? `<span class="news-source">Credibility: ${s.credibilityScore}/100</span>` : '';
     return `
       <div class="news-item">
         <div class="news-headline">${s.title}</div>
@@ -1439,7 +1333,6 @@
           <span class="news-source">${s.source || ''}</span>
           <span class="news-tag ${categoryTag(cat)}">${cat}</span>
           ${ibm}
-          ${cred}
           ${s.sentiment ? `<span class="news-source">Sentiment: ${s.sentiment}</span>` : ''}
         </div>
       </div>`;
@@ -1451,7 +1344,8 @@
     const pri = scoring.priority || 'MEDIUM';
     const score = scoring.totalScore || '—';
     const val = opp.estimatedValue ? fmtM(opp.estimatedValue) : '';
-    const recs = (scoring.recommendation || []).slice(0, 2).map(r => `<div style="color:var(--muted);font-size:11px;margin-top:2px">• ${r}</div>`).join('');
+    const recs = (scoring.recommendation || []).slice(0,2).map(r =>
+      `<div style="color:var(--muted);font-size:11px;margin-top:2px">• ${r}</div>`).join('');
     return `
       <div class="opp-item">
         <div class="opp-header">

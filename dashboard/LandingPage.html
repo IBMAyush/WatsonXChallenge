@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IBM Nexus — Oil & Gas Opportunity Intelligence</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #03050a;
+      --surface: #080d16;
+      --border:  #111d30;
+      --text:    #dce6f5;
+      --muted:   #3d5070;
+      --accent:  #2f7de1;
+      --bullish: #1fba5a;
+      --bearish: #e03c3c;
+    }
+
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 14px;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+    ::-webkit-scrollbar { width: 3px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #111d30; border-radius: 2px; }
+
+    /* ─── CANVAS PARTICLE FIELD ─── */
+    #particleCanvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      opacity: .55;
+    }
+
+    /* ─── NAV ─── */
+    nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+      height: 52px;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 28px;
+      border-bottom: 1px solid rgba(17,29,48,0.8);
+      background: rgba(3,5,10,0.85);
+      backdrop-filter: blur(18px);
+    }
+    .nav-left { display:flex; align-items:center; gap:10px; }
+    .nav-orb {
+      position: relative; width:30px; height:30px;
+      display:grid; place-items:center; border-radius:7px;
+      background: rgba(47,125,225,0.1);
+      border: 1px solid rgba(47,125,225,0.3);
+    }
+    .nav-orb-dot {
+      position:absolute; top:-2px; right:-2px;
+      width:6px; height:6px; border-radius:50%;
+      background: var(--bullish);
+      animation: blink 1.4s ease-in-out infinite;
+    }
+    .nav-sub { font-size:9px; letter-spacing:.2em; color: var(--muted); font-family:monospace; }
+    .nav-name { font-size:13px; font-weight:700; line-height:1; }
+    .nav-name span { color: var(--accent); }
+    .nav-time { font-size:11px; font-family:monospace; color: var(--muted); }
+    .launch-btn {
+      display:inline-flex; align-items:center; gap:7px;
+      padding:8px 18px; border-radius:7px;
+      background: var(--accent); color:#fff;
+      font-size:13px; font-weight:600;
+      text-decoration:none; transition:opacity .15s;
+      box-shadow: 0 0 20px rgba(47,125,225,0.3);
+    }
+    .launch-btn:hover { opacity:.85; }
+
+    /* ─── HERO ─── */
+    .hero {
+      position: relative;
+      min-height: 100vh;
+      display: flex; flex-direction:column;
+      align-items:center; justify-content:center;
+      text-align:center; padding:52px 24px 0;
+      overflow:hidden;
+    }
+
+    /* animated grid */
+    .hero-grid {
+      position:absolute; inset:0; z-index:1; pointer-events:none;
+      background-image:
+        linear-gradient(to right, rgba(47,125,225,0.04) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(47,125,225,0.04) 1px, transparent 1px);
+      background-size: 60px 60px;
+      animation: gridDrift 20s linear infinite;
+    }
+    @keyframes gridDrift {
+      from { background-position: 0 0, 0 0; }
+      to   { background-position: 60px 60px, 60px 60px; }
+    }
+
+    /* radial vignette glow */
+    .hero-glow-bg {
+      position:absolute; top:-5%; left:50%; transform:translateX(-50%);
+      width:1100px; height:600px; z-index:1; pointer-events:none;
+      background: radial-gradient(ellipse at 50% 0%, rgba(47,125,225,0.18) 0%, transparent 65%);
+      animation: pulseGlow 5s ease-in-out infinite;
+    }
+    @keyframes pulseGlow {
+      0%,100% { opacity:.7; }
+      50%      { opacity:1.0; }
+    }
+
+    /* scan line */
+    .hero-scan {
+      position:absolute; left:0; right:0; height:1px; z-index:2;
+      background: linear-gradient(90deg, transparent, rgba(47,125,225,0.35) 40%, rgba(47,125,225,0.55) 50%, rgba(47,125,225,0.35) 60%, transparent);
+      pointer-events:none;
+      animation: scanLine 6s linear infinite;
+    }
+    @keyframes scanLine {
+      0%   { top:-2px; opacity:0; }
+      4%   { opacity:1; }
+      96%  { opacity:.4; }
+      100% { top:100%; opacity:0; }
+    }
+
+    .hero-inner { position:relative; z-index:3; }
+
+    /* badge */
+    .hero-badge {
+      display:inline-flex; align-items:center; gap:7px;
+      padding:5px 14px; border-radius:20px;
+      font-size:10px; font-family:monospace; letter-spacing:.18em;
+      border:1px solid rgba(47,125,225,0.35);
+      background: rgba(47,125,225,0.07);
+      color: var(--accent); margin-bottom:28px;
+      animation: fadeInDown .8s ease both;
+    }
+    .badge-dot { width:5px; height:5px; border-radius:50%; background:var(--accent); animation:blink 1.4s ease-in-out infinite; }
+
+    /* METALLIC IBM NEXUS */
+    .hero-title {
+      font-size: clamp(72px, 14vw, 148px);
+      font-weight: 900;
+      letter-spacing: -4px;
+      line-height: 1;
+      margin-bottom: 28px;
+      position: relative;
+      display: inline-block;
+      /* chrome metallic gradient */
+      background: linear-gradient(
+        180deg,
+        #ffffff 0%,
+        #a8c4e8 18%,
+        #ddeeff 30%,
+        #2f7de1 45%,
+        #8ab8f0 55%,
+        #ffffff 65%,
+        #5590cc 78%,
+        #b8d4f5 88%,
+        #e8f2ff 100%
+      );
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      filter: drop-shadow(0 0 40px rgba(47,125,225,0.5)) drop-shadow(0 2px 0 rgba(0,0,0,0.8));
+      animation: fadeInUp .9s ease .1s both;
+    }
+    /* glitch flicker */
+    .hero-title::before {
+      content: attr(data-text);
+      position:absolute; inset:0;
+      background: linear-gradient(180deg, rgba(255,80,80,0.15) 0%, transparent 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      animation: glitch 8s ease-in-out infinite;
+      pointer-events:none;
+    }
+    @keyframes glitch {
+      0%,90%,100% { opacity:0; transform:translateX(0); }
+      91%          { opacity:.6; transform:translateX(-2px) skewX(-1deg); }
+      93%          { opacity:.4; transform:translateX(2px) skewX(1deg); }
+      95%          { opacity:.5; transform:translateX(-1px); }
+    }
+
+    .hero-sub {
+      max-width:560px; margin: 0 auto 36px;
+      font-size:15px; color:rgba(180,200,230,0.65);
+      line-height:1.75;
+      animation: fadeInUp .9s ease .25s both;
+    }
+
+    .hero-ctas {
+      display:flex; flex-wrap:wrap; gap:14px;
+      align-items:center; justify-content:center;
+      margin-bottom:60px;
+      animation: fadeInUp .9s ease .4s both;
+    }
+    .cta-primary {
+      display:inline-flex; align-items:center; gap:8px;
+      padding:13px 30px; border-radius:8px;
+      background: var(--accent); color:#fff;
+      font-size:14px; font-weight:700;
+      text-decoration:none;
+      box-shadow: 0 0 40px rgba(47,125,225,0.45), 0 0 80px rgba(47,125,225,0.15);
+      transition: box-shadow .2s, opacity .15s;
+    }
+    .cta-primary:hover { opacity:.9; box-shadow: 0 0 60px rgba(47,125,225,0.6), 0 0 120px rgba(47,125,225,0.2); }
+    .cta-secondary {
+      display:inline-flex; align-items:center; gap:8px;
+      padding:13px 28px; border-radius:8px;
+      border:1px solid rgba(47,125,225,0.25);
+      color:rgba(140,170,210,0.8); font-size:14px; font-weight:500;
+      text-decoration:none; transition:all .2s;
+    }
+    .cta-secondary:hover { border-color:rgba(47,125,225,0.6); color:var(--text); }
+
+    .scroll-hint {
+      display:flex; flex-direction:column; align-items:center; gap:5px;
+      font-size:9px; font-family:monospace; letter-spacing:.25em;
+      color:rgba(61,80,112,0.6);
+      animation: fadeInUp .9s ease .6s both, blink 2s ease-in-out 1.5s infinite;
+    }
+
+    /* ─── TICKER ─── */
+    .ticker {
+      position:relative; z-index:5;
+      height:36px; border-top:1px solid var(--border); border-bottom:1px solid var(--border);
+      background: rgba(5,8,15,0.7);
+      overflow:hidden;
+    }
+    .ticker-track {
+      position:absolute; inset:0; display:flex; align-items:center;
+      white-space:nowrap; font-family:monospace; font-size:11px;
+      animation: tickerScroll 55s linear infinite;
+    }
+    .t-item { display:inline-flex; align-items:center; gap:7px; padding:0 20px; border-right:1px solid rgba(17,29,48,0.7); }
+    .t-sym  { color:var(--muted); letter-spacing:.08em; }
+    .t-val  { color:var(--text); }
+    .t-up   { color:var(--bullish); }
+    .t-dn   { color:var(--bearish); }
+    .t-neu  { color:var(--muted); }
+
+    /* ─── SECTIONS ─── */
+    .section { padding:100px 24px; max-width:1080px; margin:0 auto; position:relative; z-index:5; }
+
+    .section-label {
+      font-size:10px; font-family:monospace; letter-spacing:.22em;
+      text-transform:uppercase; color:var(--muted); margin-bottom:14px;
+    }
+    .section-heading {
+      font-size: clamp(34px, 5vw, 52px);
+      font-weight:800; letter-spacing:-1.5px; line-height:1.1; margin-bottom:16px;
+    }
+    .section-heading .accent {
+      background: linear-gradient(135deg, #5aaeff 0%, #2f7de1 50%, #8ab8f0 100%);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    }
+    .section-sub { font-size:15px; color:rgba(140,170,210,0.6); max-width:520px; line-height:1.75; margin-bottom:48px; }
+
+    .section-row { display:flex; gap:28px; }
+    .vert-text {
+      writing-mode:vertical-lr; transform:rotate(180deg);
+      font-size:9px; font-family:monospace; letter-spacing:.22em;
+      color:rgba(47,80,112,0.2); white-space:nowrap; flex-shrink:0; padding-top:4px;
+    }
+
+    /* ─── STATS ─── */
+    .stats-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:12px; }
+    @media(min-width:600px){ .stats-grid { grid-template-columns:repeat(4,1fr); } }
+    .stat-card {
+      background: rgba(5,10,18,0.8);
+      border:1px solid rgba(47,125,225,0.12);
+      border-radius:10px; padding:24px 18px; text-align:center;
+      transition: border-color .3s, box-shadow .3s;
+    }
+    .stat-card:hover { border-color:rgba(47,125,225,0.35); box-shadow:0 0 30px rgba(47,125,225,0.08); }
+    .stat-val {
+      font-size:38px; font-weight:900; letter-spacing:-1px; margin-bottom:6px;
+      background: linear-gradient(180deg, #fff 0%, #5aaeff 60%, #2f7de1 100%);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    }
+    .stat-lbl { font-size:11px; color:var(--muted); line-height:1.4; }
+
+    /* ─── FEATURES ─── */
+    .features-grid { display:grid; gap:12px; grid-template-columns:1fr; }
+    @media(min-width:600px){ .features-grid { grid-template-columns:repeat(2,1fr); } }
+    @media(min-width:900px){ .features-grid { grid-template-columns:repeat(3,1fr); } }
+    .feature-card {
+      background: rgba(5,10,18,0.8);
+      border:1px solid rgba(17,29,48,0.9); border-radius:10px; padding:20px;
+      transition: border-color .3s, box-shadow .3s;
+    }
+    .feature-card:hover { border-color:rgba(47,125,225,0.3); box-shadow:0 0 24px rgba(47,125,225,0.06); }
+    .feature-title { font-size:13px; font-weight:700; color:var(--accent); margin-bottom:7px; }
+    .feature-desc  { font-size:12px; color:rgba(100,130,170,0.75); line-height:1.65; }
+
+    /* ─── FEED ─── */
+    .feed-panel { background:rgba(5,10,18,0.8); border:1px solid var(--border); border-radius:10px; overflow:hidden; }
+    .feed-row { display:flex; align-items:center; gap:14px; padding:13px 20px; border-bottom:1px solid rgba(17,29,48,0.8); transition:background .2s; }
+    .feed-row:last-child { border-bottom:none; }
+    .feed-row:hover { background:rgba(47,125,225,0.04); }
+    .feed-prio { font-size:9px; font-family:monospace; font-weight:700; letter-spacing:.08em; width:62px; flex-shrink:0; }
+    .p-CRITICAL { color:#f87171; } .p-HIGH { color:#fb923c; } .p-MEDIUM { color:#60a5fa; } .p-LOW { color:#4ade80; }
+    .feed-text  { flex:1; font-size:13px; color:rgba(200,220,245,0.85); }
+    .feed-ago   { font-size:11px; font-family:monospace; color:var(--muted); flex-shrink:0; }
+
+    /* ─── CTA BOTTOM ─── */
+    .cta-section { text-align:center; padding:110px 24px; position:relative; z-index:5; overflow:hidden; }
+    .cta-section::before {
+      content:''; position:absolute; bottom:-10%; left:50%; transform:translateX(-50%);
+      width:900px; height:450px; pointer-events:none;
+      background: radial-gradient(ellipse at 50% 100%, rgba(47,125,225,0.16) 0%, transparent 70%);
+    }
+    .cta-section h2 {
+      font-size: clamp(40px, 7vw, 62px); font-weight:900; letter-spacing:-2px; margin-bottom:16px;
+      background: linear-gradient(180deg, #fff 0%, #a8c4e8 40%, #2f7de1 100%);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+      filter: drop-shadow(0 0 30px rgba(47,125,225,0.4));
+    }
+    .cta-section p { font-size:15px; color:rgba(120,150,190,0.7); max-width:420px; margin:0 auto 36px; line-height:1.7; }
+
+    /* ─── FOOTER ─── */
+    footer {
+      position:relative; z-index:5;
+      border-top:1px solid var(--border); padding:18px 28px;
+      display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:8px;
+      font-size:10px; font-family:monospace; color:var(--muted);
+    }
+    .footer-live { display:flex; align-items:center; gap:6px; }
+    .footer-dot  { width:5px; height:5px; border-radius:50%; background:var(--bullish); animation:blink 1.4s ease-in-out infinite; }
+
+    /* ─── FADE-UP ─── */
+    .fade-up { opacity:0; transform:translateY(32px); transition:opacity .7s ease, transform .7s ease; }
+    .fade-up.visible { opacity:1; transform:translateY(0); }
+
+    /* ─── KEYFRAMES ─── */
+    @keyframes blink    { 0%,100%{opacity:1} 50%{opacity:.25} }
+    @keyframes tickerScroll { from{transform:translateX(0)} to{transform:translateX(-50%)} }
+    @keyframes fadeInDown { from{opacity:0;transform:translateY(-16px)} to{opacity:1;transform:translateY(0)} }
+    @keyframes fadeInUp   { from{opacity:0;transform:translateY(24px)}  to{opacity:1;transform:translateY(0)} }
+    @keyframes counterUp  { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+  </style>
+</head>
+<body>
+
+<canvas id="particleCanvas"></canvas>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-left">
+    <div class="nav-orb">
+      <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#2f7de1" stroke-width="2">
+        <circle cx="12" cy="12" r="3"/><circle cx="12" cy="12" r="7" opacity=".5"/><circle cx="12" cy="12" r="11" opacity=".2"/>
+      </svg>
+      <div class="nav-orb-dot"></div>
+    </div>
+    <div>
+      <div class="nav-sub">IBM · INTERNAL</div>
+      <div class="nav-name">Nexus<span>.</span></div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;gap:14px;">
+    <span class="nav-time" id="navTime"></span>
+    <a href="index.html" class="launch-btn">
+      Launch Dashboard
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+    </a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-grid"></div>
+  <div class="hero-glow-bg"></div>
+  <div class="hero-scan"></div>
+
+  <div class="hero-inner" id="heroInner">
+    <h1 class="hero-title" id="heroTitle" data-text="IBM NEXUS">IBM <span style="-webkit-text-fill-color:transparent;background:linear-gradient(180deg,#a8d4ff 0%,#2f7de1 45%,#8ab8f0 70%,#ffffff 100%);-webkit-background-clip:text;background-clip:text;">NEXUS</span></h1>
+
+    <p class="hero-sub">
+      Four specialized AI agents that continuously monitor energy markets, score opportunities with an 8-factor algorithm, and execute seven automated workflows — so your sales team spends time closing, not researching.
+    </p>
+
+    <div class="hero-ctas">
+      <a href="index.html" class="cta-primary">
+        Launch Dashboard
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+      <a href="#how" class="cta-secondary">See How It Works</a>
+    </div>
+
+    <div class="scroll-hint">
+      <span>SCROLL</span>
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 9l6 6 6-6"/></svg>
+    </div>
+  </div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker" style="position:relative;z-index:5;">
+  <div class="ticker-track" id="tickerTrack"></div>
+</div>
+
+<!-- STATS -->
+<div class="section" id="how">
+  <div class="stats-grid">
+    <div class="stat-card fade-up">                             <div class="stat-val" data-target="10" data-suffix="+">0+</div><div class="stat-lbl">Hours saved / user / week</div></div>
+    <div class="stat-card fade-up" style="transition-delay:.08s"><div class="stat-val" data-target="70" data-suffix="%">0%</div><div class="stat-lbl">Faster deal response</div></div>
+    <div class="stat-card fade-up" style="transition-delay:.16s"><div class="stat-val" data-target="30" data-suffix="%">0%</div><div class="stat-lbl">Win-rate lift</div></div>
+    <div class="stat-card fade-up" style="transition-delay:.24s"><div class="stat-val" data-suffix="+">$5M+</div><div class="stat-lbl">Revenue potential</div></div>
+  </div>
+</div>
+
+<!-- PLATFORM FEATURES -->
+<div class="section" style="padding-top:0">
+  <div class="section-row">
+    <div class="vert-text">Built for Enterprise Scale.</div>
+    <div style="flex:1">
+      <div class="section-label">Platform Features</div>
+      <h2 class="section-heading fade-up">Built for<br><span class="accent">Enterprise Scale.</span></h2>
+      <p class="section-sub fade-up" style="transition-delay:.1s">Every capability engineered to IBM production standards — reliable, secure, and fast.</p>
+      <div class="features-grid">
+        <div class="feature-card fade-up"><div class="feature-title">&lt; 3s Response</div><div class="feature-desc">Sub-3-second AI answers across all four agents, even at 1,000 req/min peak load.</div></div>
+        <div class="feature-card fade-up" style="transition-delay:.07s"><div class="feature-title">99.9% Uptime SLA</div><div class="feature-desc">Enterprise-grade IBM Cloud with redundant failover and full SOC 2 compliance.</div></div>
+        <div class="feature-card fade-up" style="transition-delay:.14s"><div class="feature-title">Slack-Native</div><div class="feature-desc">Eight natural-language slash commands — no context switching, no new tools.</div></div>
+        <div class="feature-card fade-up" style="transition-delay:.21s"><div class="feature-title">8-Factor Scoring</div><div class="feature-desc">Proprietary algorithm weighing market timing, deal size, relationship strength.</div></div>
+        <div class="feature-card fade-up" style="transition-delay:.28s"><div class="feature-title">Live Integrations</div><div class="feature-desc">Alpha Vantage, NewsAPI, Salesforce CRM, Watson NLP — wired together in real time.</div></div>
+        <div class="feature-card fade-up" style="transition-delay:.35s"><div class="feature-title">7 Auto-Workflows</div><div class="feature-desc">From opportunity detection to CRM update: seven end-to-end workflows run autonomously.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- LIVE FEED -->
+<div class="section">
+  <div class="section-row">
+    <div class="vert-text">Always On. Always Ahead.</div>
+    <div style="flex:1">
+      <div class="section-label">Live Intelligence Feed</div>
+      <h2 class="section-heading fade-up">Always On.<br><span class="accent">Always Ahead.</span></h2>
+      <p class="section-sub fade-up" style="transition-delay:.1s">Every signal that matters, ranked by priority and delivered in real time.</p>
+      <div class="feed-panel fade-up" style="transition-delay:.15s">
+        <div class="feed-row"><span class="feed-prio p-CRITICAL">CRITICAL</span><span class="feed-text">ExxonMobil Q3 earnings beat est. by 12%</span><span class="feed-ago">2m ago</span></div>
+        <div class="feed-row"><span class="feed-prio p-HIGH">HIGH</span><span class="feed-text">Saudi Aramco increases CapEx guidance to $50B</span><span class="feed-ago">8m ago</span></div>
+        <div class="feed-row"><span class="feed-prio p-MEDIUM">MEDIUM</span><span class="feed-text">Shell announces new LNG terminal in Singapore</span><span class="feed-ago">15m ago</span></div>
+        <div class="feed-row"><span class="feed-prio p-HIGH">HIGH</span><span class="feed-text">Chevron deal radar: Permian Basin expansion</span><span class="feed-ago">22m ago</span></div>
+        <div class="feed-row"><span class="feed-prio p-LOW">LOW</span><span class="feed-text">OPEC+ maintains production cuts through Q1</span><span class="feed-ago">34m ago</span></div>
+        <div class="feed-row"><span class="feed-prio p-CRITICAL">CRITICAL</span><span class="feed-text">BP activist investor stake reaches 8.2%</span><span class="feed-ago">41m ago</span></div>
+        <div class="feed-row"><span class="feed-prio p-MEDIUM">MEDIUM</span><span class="feed-text">ConocoPhillips acquires Permian assets for $22B</span><span class="feed-ago">58m ago</span></div>
+        <div class="feed-row"><span class="feed-prio p-HIGH">HIGH</span><span class="feed-text">Halliburton wins $4B North Sea contract</span><span class="feed-ago">1h ago</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- BOTTOM CTA -->
+<div class="cta-section">
+  <h2 class="fade-up">Ready to launch?</h2>
+  <p class="fade-up" style="transition-delay:.1s">Step into the full intelligence dashboard and start closing deals faster.</p>
+  <a href="index.html" class="cta-primary fade-up" style="transition-delay:.2s;display:inline-flex;">
+    Launch Dashboard
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+  </a>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-live"><div class="footer-dot"></div> IBM NEXUS · INTERNAL USE ONLY · BOBATHON 2026</div>
+  <div id="footerTime"></div>
+</footer>
+
+<script>
+  /* ── PARTICLE FIELD ── */
+  const canvas = document.getElementById('particleCanvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, particles = [];
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  resize();
+  window.addEventListener('resize', resize);
+
+  function mkParticle() {
+    return {
+      x: Math.random() * W,
+      y: Math.random() * H,
+      r: Math.random() * 1.2 + 0.3,
+      vx: (Math.random() - 0.5) * 0.25,
+      vy: -Math.random() * 0.35 - 0.1,
+      alpha: Math.random() * 0.5 + 0.1,
+    };
+  }
+  for (let i = 0; i < 140; i++) particles.push(mkParticle());
+
+  function drawParticles() {
+    ctx.clearRect(0, 0, W, H);
+    particles.forEach(p => {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+      ctx.fillStyle = `rgba(47,125,225,${p.alpha})`;
+      ctx.fill();
+      p.x += p.vx; p.y += p.vy;
+      if (p.y < -4) { p.y = H + 4; p.x = Math.random() * W; }
+    });
+
+    // draw faint connection lines between nearby particles
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist < 90) {
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          ctx.strokeStyle = `rgba(47,125,225,${0.06 * (1 - dist/90)})`;
+          ctx.lineWidth = 0.5;
+          ctx.stroke();
+        }
+      }
+    }
+    requestAnimationFrame(drawParticles);
+  }
+  drawParticles();
+
+  /* ── TICKER ── */
+  const TDATA = [
+    {s:'WTI',v:'$82.40',d:'+1.2%',u:1},{s:'BRENT',v:'$85.60',d:'+0.9%',u:1},
+    {s:'NAT GAS',v:'$2.84',d:'-0.4%',u:0},{s:'XOM',v:'$118.20',d:'+2.1%',u:1},
+    {s:'CVX',v:'$162.80',d:'+0.7%',u:1},{s:'SLB',v:'$48.30',d:'-0.3%',u:0},
+    {s:'HAL',v:'$34.50',d:'+1.5%',u:1},{s:'COP',v:'$128.90',d:'0.0%',u:null},
+    {s:'DXY',v:'104.2',d:'-0.1%',u:0},{s:'GOLD',v:'$2,342',d:'+0.5%',u:1},
+  ];
+  const tickerHTML = [...TDATA,...TDATA].map(t =>
+    `<span class="t-item"><span class="t-sym">${t.s}</span><span class="t-val">${t.v}</span><span class="${t.u===1?'t-up':t.u===0?'t-dn':'t-neu'}">${t.d}</span></span>`
+  ).join('');
+  document.getElementById('tickerTrack').innerHTML = tickerHTML;
+
+  /* ── CLOCK ── */
+  function tick() {
+    const s = new Date().toUTCString();
+    const t = s.slice(17,25) + ' UTC';
+    document.getElementById('navTime').textContent = t;
+    document.getElementById('footerTime').textContent = s.slice(0,25) + ' UTC';
+  }
+  tick(); setInterval(tick, 1000);
+
+  /* ── SCROLL: stretch + suck away IBM NEXUS ── */
+  const heroInner = document.getElementById('heroInner');
+  const heroTitle = document.getElementById('heroTitle');
+
+  window.addEventListener('scroll', () => {
+    const y = window.scrollY;
+    const vh = window.innerHeight;
+
+    // title: stretch vertically then suck up
+    const stretchPhase = Math.min(y / (vh * 0.25), 1);         // 0→1 over first 25vh
+    const suckPhase    = Math.max(0, (y - vh*0.25) / (vh*0.4)); // 0→1 from 25vh to 65vh
+
+    const scaleY   = 1 + stretchPhase * 0.35;                   // stretch to 1.35x tall
+    const scaleX   = 1 - stretchPhase * 0.06;                   // slight horizontal squeeze
+    const translateY = -suckPhase * vh * 0.7;                   // fly upward
+    const opacity  = Math.max(0, 1 - suckPhase * 1.4);
+    const blur     = suckPhase * 12;
+
+    heroTitle.style.transform = `scaleY(${scaleY}) scaleX(${scaleX}) translateY(${translateY / scaleY}px)`;
+    heroTitle.style.opacity   = opacity;
+    heroTitle.style.filter    = `drop-shadow(0 0 ${40 + stretchPhase*60}px rgba(47,125,225,${0.5 + stretchPhase*0.4})) blur(${blur}px)`;
+
+    // rest of hero content fades out normally
+    const restOpacity = Math.max(0, 1 - y / (vh * 0.45));
+    heroInner.querySelectorAll(':not(#heroTitle)').forEach(el => {
+      el.style.opacity = restOpacity;
+      el.style.transform = `translateY(${-y * 0.1}px)`;
+    });
+  }, { passive: true });
+
+  /* ── INTERSECTION OBSERVER (fade-up + counter) ── */
+  const io = new IntersectionObserver(entries => {
+    entries.forEach(e => {
+      if (!e.isIntersecting) return;
+      e.target.classList.add('visible');
+      // counter animation for stat vals
+      const val = e.target.querySelector('[data-target]');
+      if (val) {
+        const target = +val.dataset.target;
+        const suffix = val.dataset.suffix || '';
+        let start = 0;
+        const dur = 1200;
+        const step = timestamp => {
+          if (!start) start = timestamp;
+          const p = Math.min((timestamp - start) / dur, 1);
+          val.textContent = Math.round(p * target) + suffix;
+          if (p < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+      }
+      io.unobserve(e.target);
+    });
+  }, { threshold: 0.12 });
+
+  document.querySelectorAll('.fade-up').forEach(el => io.observe(el));
+</script>
+</body>
+</html>
