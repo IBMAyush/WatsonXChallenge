@@ -247,7 +247,7 @@
     .t-neu  { color:var(--muted); }
 
     /* ─── SECTIONS ─── */
-    .section { padding:100px 24px; max-width:1080px; margin:0 auto; position:relative; z-index:5; }
+    .section { padding:80px 24px; max-width:1080px; margin:0 auto; position:relative; z-index:5; }
 
     .section-label {
       font-size:10px; font-family:monospace; letter-spacing:.22em;
@@ -258,6 +258,11 @@
       font-weight:800; letter-spacing:-1.5px; line-height:1.1; margin-bottom:16px;
     }
     .section-heading .accent {
+      background: linear-gradient(135deg, #5aaeff 0%, #2f7de1 50%, #8ab8f0 100%);
+      -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
+    }
+    /* rh-line spans need display:block but must keep gradient when also .accent */
+    .reveal-heading .rh-line.accent {
       background: linear-gradient(135deg, #5aaeff 0%, #2f7de1 50%, #8ab8f0 100%);
       -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text;
     }
@@ -464,10 +469,16 @@
   <div class="hero-scan"></div>
 
   <div class="hero-inner" id="heroInner">
+    <div class="hero-badge">
+      <span class="badge-dot"></span>
+      IBM HACKATHON 2026 · BOBATHON
+      <span style="font-size:9px;opacity:.7;">✦</span>
+    </div>
+
     <h1 class="hero-title" id="heroTitle" data-text="IBM NEXUS">IBM <span style="-webkit-text-fill-color:transparent;background:linear-gradient(180deg,#a8d4ff 0%,#2f7de1 45%,#8ab8f0 70%,#ffffff 100%);-webkit-background-clip:text;background-clip:text;">NEXUS</span></h1>
 
     <p class="hero-sub">
-      Build and customize your own AI agents. Deploy in minutes, connect to any data source, and automate the workflows that matter — your intelligence platform, your rules.
+      Real-time oil &amp; gas opportunity intelligence. Four AI agents monitor energy markets, score deals with an 8-factor algorithm, and automate seven workflows — so your team spends time closing, not researching.
     </p>
 
     <div class="hero-ctas">
@@ -492,6 +503,9 @@
 
 <!-- STATS -->
 <div class="section" id="how">
+  <div class="hr-reveal"></div>
+  <div class="section-label label-animate">By the Numbers</div>
+  <h2 class="section-heading reveal-heading" style="margin-bottom:36px"><span class="rh-line">Measurable</span><span class="rh-line accent">Impact.</span></h2>
   <div class="stats-grid">
     <div class="stat-card"><div class="stat-val" data-target="10" data-suffix="+">0+</div><div class="stat-lbl">Hours saved / user / week</div></div>
     <div class="stat-card"><div class="stat-val" data-target="70" data-suffix="%">0%</div><div class="stat-lbl">Faster deal response</div></div>

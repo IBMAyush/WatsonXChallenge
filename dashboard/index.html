@@ -1165,7 +1165,7 @@
     document.getElementById('overview-stats').innerHTML = MOCK.stats.map((s,i) => `
       <div class="card slide-left d${i+1}">
         <div class="card-title">${s.title}</div>
-        <div class="stat-value">${ s.title==='US Rig Count' ? s.value : '$'+s.value }</div>
+        <div class="stat-value">${s.value}</div>
         <div class="stat-sub">${s.sub}</div>
         <div class="stat-change ${changeClass(s.change)}">${changeArrow(s.change)} ${Math.abs(s.change)}${s.title==='US Rig Count'?' this week':'%'}</div>
       </div>`).join('');
