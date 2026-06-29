@@ -84,7 +84,7 @@
       display: flex; flex-direction:column;
       align-items:center; justify-content:center;
       text-align:center; padding:52px 24px 0;
-      overflow:hidden;
+      overflow: visible;
     }
 
     /* animated grid */
@@ -150,6 +150,7 @@
       margin-bottom: 28px;
       position: relative;
       display: inline-block;
+      will-change: transform, opacity, filter;
       /* chrome metallic gradient */
       background: linear-gradient(
         180deg,
@@ -383,7 +384,7 @@
     <h1 class="hero-title" id="heroTitle" data-text="IBM NEXUS">IBM <span style="-webkit-text-fill-color:transparent;background:linear-gradient(180deg,#a8d4ff 0%,#2f7de1 45%,#8ab8f0 70%,#ffffff 100%);-webkit-background-clip:text;background-clip:text;">NEXUS</span></h1>
 
     <p class="hero-sub">
-      Four specialized AI agents that continuously monitor energy markets, score opportunities with an 8-factor algorithm, and execute seven automated workflows — so your sales team spends time closing, not researching.
+      Build and customize your own AI agents. Deploy in minutes, connect to any data source, and automate the workflows that matter — your intelligence platform, your rules.
     </p>
 
     <div class="hero-ctas">
@@ -552,33 +553,51 @@
   }
   tick(); setInterval(tick, 1000);
 
-  /* ── SCROLL: stretch + suck away IBM NEXUS ── */
+  /* ── SCROLL: Star Wars perspective suck-away ── */
   const heroInner = document.getElementById('heroInner');
   const heroTitle = document.getElementById('heroTitle');
 
+  // Tight perspective container — small value = extreme vanishing point
+  const perspWrap = document.createElement('div');
+  perspWrap.style.cssText = 'perspective:280px; perspective-origin:50% 120%; overflow:visible;';
+  heroTitle.parentNode.insertBefore(perspWrap, heroTitle);
+  perspWrap.appendChild(heroTitle);
+
   window.addEventListener('scroll', () => {
-    const y = window.scrollY;
+    const y  = window.scrollY;
     const vh = window.innerHeight;
 
-    // title: stretch vertically then suck up
-    const stretchPhase = Math.min(y / (vh * 0.25), 1);         // 0→1 over first 25vh
-    const suckPhase    = Math.max(0, (y - vh*0.25) / (vh*0.4)); // 0→1 from 25vh to 65vh
+    // Phase 1 (0 → 40vh): tilt + elongate massively
+    const tiltP = Math.min(y / (vh * 0.40), 1);
+    // Phase 2 (40vh → 72vh): rocket up vanishing point
+    const suckP = Math.max(0, (y - vh * 0.40) / (vh * 0.32));
 
-    const scaleY   = 1 + stretchPhase * 0.35;                   // stretch to 1.35x tall
-    const scaleX   = 1 - stretchPhase * 0.06;                   // slight horizontal squeeze
-    const translateY = -suckPhase * vh * 0.7;                   // fly upward
-    const opacity  = Math.max(0, 1 - suckPhase * 1.4);
-    const blur     = suckPhase * 12;
+    // smoothstep
+    const te = tiltP * tiltP * (3 - 2 * tiltP);
+    const sk = suckP * suckP * (3 - 2 * suckP);
 
-    heroTitle.style.transform = `scaleY(${scaleY}) scaleX(${scaleX}) translateY(${translateY / scaleY}px)`;
+    const rotateX = te * 78;           // extreme tilt — 78° at peak
+    const scaleY  = 1 + te * 4.5;     // elongate to 5.5× tall
+    const scaleX  = 1 - te * 0.22;    // pinch narrow like perspective
+    const moveY   = -sk * vh * 1.4;   // shoot past top of viewport
+    const opacity = Math.max(0, 1 - sk * 2.5);
+    const blur    = sk * 32;
+    const glow    = 40 + te * 160;
+    const glowA   = 0.4 + te * 0.55;
+
+    // shift perspective origin down as it tilts so vanishing pt stays horizon
+    perspWrap.style.perspectiveOrigin = `50% ${120 - te * 80}%`;
+
+    heroTitle.style.transformOrigin = '50% 100%'; // anchor at bottom
+    heroTitle.style.transform = `translateY(${moveY}px) rotateX(${rotateX}deg) scaleY(${scaleY}) scaleX(${scaleX})`;
     heroTitle.style.opacity   = opacity;
-    heroTitle.style.filter    = `drop-shadow(0 0 ${40 + stretchPhase*60}px rgba(47,125,225,${0.5 + stretchPhase*0.4})) blur(${blur}px)`;
+    heroTitle.style.filter    = `drop-shadow(0 0 ${glow}px rgba(47,125,225,${glowA})) blur(${blur}px)`;
 
-    // rest of hero content fades out normally
-    const restOpacity = Math.max(0, 1 - y / (vh * 0.45));
+    // everything else fades out faster
+    const restOp = Math.max(0, 1 - y / (vh * 0.38));
     heroInner.querySelectorAll(':not(#heroTitle)').forEach(el => {
-      el.style.opacity = restOpacity;
-      el.style.transform = `translateY(${-y * 0.1}px)`;
+      el.style.opacity   = restOp;
+      el.style.transform = `translateY(${-y * 0.15}px)`;
     });
   }, { passive: true });
 
