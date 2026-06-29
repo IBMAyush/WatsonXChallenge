@@ -1,0 +1,1476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Oil & Gas Intelligence — IBM</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0e1a;
+      --surface: #111827;
+      --surface2: #1a2235;
+      --border: #1f2d45;
+      --text: #e8edf5;
+      --muted: #6b7a99;
+      --accent: #3b82f6;
+      --green: #22c55e;
+      --yellow: #f59e0b;
+      --red: #ef4444;
+      --purple: #8b5cf6;
+    }
+
+    body {
+      font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      font-size: 13px;
+      line-height: 1.5;
+      min-height: 100vh;
+    }
+
+    /* COMMAND BOARD BACKGROUND */
+    #shader-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+      background: #000510;
+    }
+    /* dim overlay so content stays readable */
+    #shader-bg::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: rgba(4, 7, 18, 0.78);
+      z-index: 2;
+    }
+
+    /* ── CB: cityscape ── */
+    #cb-city {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, #000510 0%, #000c1a 45%, #001428 55%, #000a14 100%);
+      z-index: 0;
+    }
+    #cb-city svg { position: absolute; bottom: 0; left: 0; width: 100%; height: 55%; }
+
+    /* ── CB: table surface ── */
+    #cb-table {
+      position: absolute;
+      bottom: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 88%;
+      height: 34%;
+      background: linear-gradient(170deg, #0a0f16 0%, #060a10 40%, #04070d 100%);
+      border-top: 1px solid rgba(0,180,255,0.3);
+      border-radius: 160px 160px 0 0 / 30px 30px 0 0;
+      box-shadow: 0 -4px 40px rgba(0,160,255,0.18), 0 -1px 0 rgba(0,200,255,0.25), inset 0 2px 30px rgba(0,100,200,0.08);
+      z-index: 1;
+    }
+    #cb-table::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 10%; right: 10%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(0,220,255,0.6), rgba(0,180,255,0.8), rgba(0,220,255,0.6), transparent);
+    }
+    #cb-table::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(88deg, transparent, transparent 28px, rgba(0,80,160,0.04) 29px, transparent 30px);
+      border-radius: inherit;
+    }
+
+    /* ── CB: holo stage ── */
+    #cb-stage {
+      position: absolute;
+      bottom: 28%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 85%;
+      height: 62%;
+      z-index: 1;
+    }
+
+    /* ── CB: globe ── */
+    #cb-globe-wrap {
+      position: absolute;
+      top: 6%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 160px;
+      height: 160px;
+    }
+    .cb-orbit {
+      position: absolute;
+      top: 50%; left: 50%;
+      border-radius: 50%;
+      border: 1px solid rgba(0,180,255,0.25);
+    }
+    .cb-orbit-1 { width: 190px; height: 190px; margin-left:-95px; margin-top:-95px; border-color: rgba(0,200,255,0.18); }
+    .cb-orbit-2 { width: 240px; height: 80px; margin-left:-120px; margin-top:-40px; border-color: rgba(0,160,255,0.13); transform: rotateX(75deg); }
+    .cb-orbit-3 { width: 210px; height: 210px; margin-left:-105px; margin-top:-105px; border-color: rgba(0,100,200,0.15); border-style: dashed; }
+    .cb-pulse {
+      position: absolute;
+      top: 50%; left: 50%;
+      transform: translate(-50%,-50%);
+      border-radius: 50%;
+      border: 1px solid rgba(0,200,255,0.25);
+      animation: cb-pulse 2.4s ease-out infinite;
+    }
+    .cb-pulse:nth-child(5) { animation-delay: 0.8s; }
+    .cb-pulse:nth-child(6) { animation-delay: 1.6s; }
+    @keyframes cb-pulse {
+      0%   { width:80px;  height:80px;  opacity:.7; }
+      100% { width:240px; height:240px; opacity:0; }
+    }
+    .cb-atom {
+      position: absolute;
+      width: 5px; height: 5px;
+      border-radius: 50%;
+      background: rgba(0,220,255,0.85);
+      box-shadow: 0 0 6px rgba(0,220,255,1), 0 0 12px rgba(0,180,255,0.5);
+    }
+    #cb-globe {
+      width: 160px; height: 160px;
+      border-radius: 50%;
+      background: radial-gradient(circle at 38% 35%, rgba(0,220,255,0.22) 0%, transparent 55%),
+                  radial-gradient(circle at 62% 65%, rgba(0,100,200,0.18) 0%, transparent 50%),
+                  radial-gradient(circle at 50% 50%, rgba(0,30,80,0.9) 0%, rgba(0,10,40,0.98) 100%);
+      border: 1.5px solid rgba(0,200,255,0.5);
+      box-shadow: 0 0 40px rgba(0,180,255,0.45), 0 0 80px rgba(0,120,255,0.2), inset 0 0 30px rgba(0,100,200,0.3);
+      position: absolute;
+      top: 0; left: 0;
+      overflow: hidden;
+    }
+    #cb-globe::before {
+      content: '';
+      position: absolute;
+      top: 8%; left: 12%;
+      width: 35%; height: 18%;
+      background: rgba(255,255,255,0.04);
+      border-radius: 50%;
+      transform: rotate(-20deg);
+    }
+    #cb-globe-label {
+      position: absolute;
+      bottom: -22px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: rgba(0,200,255,0.8);
+      font-size: 8px;
+      letter-spacing: 2px;
+      white-space: nowrap;
+      font-family: 'Courier New', monospace;
+      text-shadow: 0 0 8px rgba(0,200,255,0.6);
+    }
+
+    /* ── CB: spheres ── */
+    .cb-sphere {
+      position: absolute;
+      border-radius: 50%;
+      background: radial-gradient(circle at 35% 30%, rgba(0,60,120,0.85) 0%, rgba(0,20,60,0.95) 60%, rgba(0,10,30,0.98) 100%);
+      border: 1px solid rgba(0,180,255,0.45);
+      box-shadow: 0 0 20px rgba(0,140,255,0.3), 0 0 45px rgba(0,100,200,0.14), inset 0 0 15px rgba(0,80,180,0.2);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: 8px;
+      font-family: 'Courier New', monospace;
+    }
+    .cb-sphere::before {
+      content: '';
+      position: absolute;
+      top: 8%; left: 12%;
+      width: 35%; height: 18%;
+      background: rgba(255,255,255,0.04);
+      border-radius: 50%;
+      transform: rotate(-20deg);
+    }
+    .cb-stitle {
+      font-size: 6px; font-weight: bold;
+      color: rgba(0,220,255,1);
+      letter-spacing: 1.2px; text-align: center;
+      text-shadow: 0 0 8px rgba(0,220,255,0.8);
+      margin-bottom: 4px; padding-bottom: 3px;
+      border-bottom: 1px solid rgba(0,180,255,0.3);
+    }
+    .cb-sc { flex:1; overflow:hidden; display:flex; flex-direction:column; gap:2px; }
+    .cb-dr {
+      font-size: 5px; color: rgba(0,200,255,0.75);
+      letter-spacing: .5px; padding: 1px 0;
+      border-bottom: 1px solid rgba(0,100,180,0.2);
+      display: flex; justify-content: space-between;
+    }
+    .cb-up  { color: rgba(0,255,140,0.9); }
+    .cb-dn  { color: rgba(255,80,80,0.9); }
+    .cb-nl  { font-size:4.8px; color:rgba(0,200,255,0.8); letter-spacing:.4px; padding:2px 0; border-bottom:1px solid rgba(0,100,180,0.15); line-height:1.4; }
+    .cb-pos { color: rgba(0,255,160,0.9); }
+    .cb-neg { color: rgba(255,100,60,0.85); }
+    .cb-neu { color: rgba(180,180,80,0.85); }
+
+    /* sphere sizes */
+    #cb-s-market      { width:148px; height:148px; top:4%;  left:2%; }
+    #cb-s-client      { width:135px; height:135px; top:44%; left:5%; }
+    #cb-s-news        { width:152px; height:152px; top:2%;  right:1%; }
+    #cb-s-competitor  { width:118px; height:118px; top:46%; right:8%; }
+    #cb-s-deal        { width:100px; height:100px; top:26%; right:0%; }
+
+    /* ── CB: UI panels ── */
+    .cb-panel {
+      position: absolute;
+      background: rgba(0,12,28,0.88);
+      border: 1px solid rgba(0,180,255,0.4);
+      border-radius: 4px;
+      padding: 7px 9px;
+      box-shadow: 0 0 18px rgba(0,120,255,0.18), inset 0 0 10px rgba(0,60,140,0.1);
+      font-family: 'Courier New', monospace;
+    }
+    .cb-ph {
+      font-size: 6px; font-weight: bold;
+      color: rgba(0,220,255,1);
+      letter-spacing: 1.5px;
+      border-bottom: 1px solid rgba(0,180,255,0.3);
+      padding-bottom: 4px; margin-bottom: 5px;
+      text-shadow: 0 0 8px rgba(0,220,255,0.7);
+    }
+    .cb-pl { font-size:5.5px; color:rgba(0,200,255,0.75); letter-spacing:.6px; margin:2px 0; line-height:1.5; }
+    .cb-chk { color:rgba(0,255,140,1); text-shadow:0 0 6px rgba(0,255,140,0.6); font-weight:bold; }
+    .cb-pend { color:rgba(0,180,255,0.55); }
+
+    #cb-p-gauge    { top:3%;  left:20%; width:110px; }
+    #cb-p-action   { top:32%; left:24%; width:175px; }
+    #cb-p-workflow { top:12%; right:20%; width:130px; }
+
+    .cb-gauge-wrap { width:90px; height:45px; margin:3px auto 0; position:relative; overflow:hidden; }
+    .cb-gauge-arc {
+      width:90px; height:90px; border-radius:50%;
+      border:6px solid transparent;
+      border-top-color: rgba(0,255,120,0.85);
+      border-right-color: rgba(0,220,255,0.7);
+      border-left-color: rgba(255,80,60,0.5);
+      position:absolute; top:0; left:0;
+      transform:rotate(135deg);
+      box-shadow: 0 0 10px rgba(0,255,140,0.35);
+    }
+    .cb-gauge-needle {
+      position:absolute; bottom:0; left:50%;
+      width:1.5px; height:38px;
+      background:rgba(0,255,180,1);
+      transform-origin:bottom center;
+      transform:translateX(-50%) rotate(-18deg);
+      box-shadow:0 0 6px rgba(0,255,180,0.8);
+    }
+    .cb-gauge-val {
+      position:absolute; bottom:2px; left:50%;
+      transform:translateX(-50%);
+      font-size:9px; font-weight:bold;
+      color:rgba(0,255,180,1);
+      text-shadow:0 0 8px rgba(0,255,180,0.8);
+      white-space:nowrap;
+    }
+
+    /* ── CB: node dot ── */
+    .cb-nd {
+      display:inline-block; width:4px; height:4px;
+      border-radius:50%; background:rgba(0,200,255,0.85);
+      box-shadow:0 0 4px rgba(0,200,255,0.9);
+      margin-right:2px; vertical-align:middle;
+    }
+
+    /* ── CB: scan line ── */
+    #cb-scan {
+      position: absolute;
+      left: 0; right: 0; height: 2px;
+      background: linear-gradient(90deg, transparent 0%, rgba(0,200,255,0.12) 30%, rgba(0,200,255,0.25) 50%, rgba(0,200,255,0.12) 70%, transparent 100%);
+      pointer-events: none;
+      z-index: 3;
+      animation: cb-scan 5s linear infinite;
+    }
+    @keyframes cb-scan {
+      0%   { top:-2px; opacity:0; }
+      5%   { opacity:1; }
+      95%  { opacity:.5; }
+      100% { top:100%; opacity:0; }
+    }
+
+    /* ── CB: status chips ── */
+    #cb-status-bar {
+      position: absolute;
+      bottom: 34.5%;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 72%;
+      z-index: 3;
+      display: flex;
+      gap: 18px;
+      justify-content: center;
+      align-items: center;
+    }
+    .cb-chip {
+      background: rgba(0,14,35,0.9);
+      border: 1px solid rgba(0,160,255,0.35);
+      border-radius: 3px;
+      padding: 2px 7px;
+      font-size: 5px;
+      color: rgba(0,200,255,0.8);
+      letter-spacing: .8px;
+      white-space: nowrap;
+      box-shadow: 0 0 8px rgba(0,140,255,0.15);
+      font-family: 'Courier New', monospace;
+    }
+    .cb-live-dot {
+      display:inline-block; width:4px; height:4px;
+      border-radius:50%; background:rgba(0,255,140,1);
+      box-shadow:0 0 5px rgba(0,255,140,1);
+      margin-right:4px; vertical-align:middle;
+    }
+
+    /* flicker */
+    @keyframes cb-flicker {
+      0%,96%,100% { opacity:1; }
+      97%  { opacity:.88; }
+      98%  { opacity:1; }
+      99%  { opacity:.93; }
+    }
+    #cb-stage { animation: cb-flicker 6s ease-in-out infinite; }
+
+    /* table glow */
+    #cb-tglow {
+      position: absolute;
+      bottom: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 90%; height: 38%;
+      background: radial-gradient(ellipse at 50% 90%, rgba(0,180,255,0.15) 0%, rgba(0,60,120,0.07) 50%, transparent 100%);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* everything above the gradient */
+    .header, .nav, .main { position: relative; z-index: 1; }
+
+    /* HEADER */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 14px 28px;
+      border-bottom: 1px solid var(--border);
+      background: rgba(17, 24, 39, 0.6);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    .header-left { display: flex; align-items: center; gap: 12px; }
+    .logo { font-size: 18px; font-weight: 700; color: var(--text); letter-spacing: -0.3px; }
+    .logo span { color: var(--accent); }
+    .badge {
+      font-size: 10px;
+      font-weight: 600;
+      background: var(--accent);
+      color: #fff;
+      padding: 2px 8px;
+      border-radius: 20px;
+      letter-spacing: 0.05em;
+    }
+    .header-right { display: flex; align-items: center; gap: 16px; }
+    .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green); display: inline-block; margin-right: 6px; }
+    .status-text { color: var(--muted); font-size: 12px; }
+    .refresh-btn {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 6px 14px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 12px;
+      font-family: inherit;
+      transition: border-color 0.15s;
+    }
+    .refresh-btn:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* NAV TABS */
+    .nav {
+      display: flex;
+      gap: 2px;
+      padding: 12px 28px 0;
+      border-bottom: 1px solid var(--border);
+      background: rgba(17, 24, 39, 0.5);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+    }
+    .nav-tab {
+      padding: 8px 16px;
+      cursor: pointer;
+      color: var(--muted);
+      font-size: 13px;
+      border-bottom: 2px solid transparent;
+      transition: color 0.15s;
+      background: none;
+      border-top: none;
+      border-left: none;
+      border-right: none;
+      font-family: inherit;
+    }
+    .nav-tab:hover { color: var(--text); }
+    .nav-tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    /* MAIN LAYOUT */
+    .main { padding: 24px 28px; max-width: 1400px; }
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* GRID */
+    .grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 20px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+    .grid-2-1 { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 20px; }
+    @media (max-width: 900px) {
+      .grid-3, .grid-2, .grid-2-1 { grid-template-columns: 1fr; }
+    }
+
+    /* CARDS */
+    .card {
+      background: rgba(17, 24, 39, 0.55);
+      border: 1px solid rgba(31, 45, 69, 0.8);
+      border-radius: 10px;
+      padding: 18px 20px;
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+    .card-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 12px;
+    }
+
+    /* STAT CARDS */
+    .stat-value { font-size: 28px; font-weight: 700; color: var(--text); letter-spacing: -0.5px; }
+    .stat-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .stat-change { font-size: 12px; margin-top: 4px; }
+    .up { color: var(--green); }
+    .down { color: var(--red); }
+    .neutral { color: var(--muted); }
+
+    /* PRICE ROW */
+    .price-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .price-row:last-child { border-bottom: none; }
+    .price-label { color: var(--muted); font-size: 12px; }
+    .price-val { font-size: 15px; font-weight: 600; }
+    .price-change { font-size: 11px; padding: 2px 6px; border-radius: 4px; }
+    .price-change.up { background: rgba(34,197,94,0.12); color: var(--green); }
+    .price-change.down { background: rgba(239,68,68,0.12); color: var(--red); }
+
+    /* NEWS ITEMS */
+    .news-item {
+      padding: 12px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .news-item:last-child { border-bottom: none; }
+    .news-headline { font-size: 13px; font-weight: 500; color: var(--text); margin-bottom: 4px; line-height: 1.4; }
+    .news-meta { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .news-source { color: var(--muted); font-size: 11px; }
+    .news-tag {
+      font-size: 10px;
+      padding: 2px 7px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+    .tag-market { background: rgba(59,130,246,0.15); color: #60a5fa; }
+    .tag-policy { background: rgba(139,92,246,0.15); color: #a78bfa; }
+    .tag-company { background: rgba(245,158,11,0.15); color: #fbbf24; }
+    .tag-emissions { background: rgba(34,197,94,0.15); color: #4ade80; }
+    .tag-tech { background: rgba(236,72,153,0.15); color: #f472b6; }
+    .ibm-score { font-size: 11px; color: var(--accent); }
+
+    /* OPPORTUNITY ITEMS */
+    .opp-item {
+      padding: 14px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .opp-item:last-child { border-bottom: none; }
+    .opp-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 6px; }
+    .opp-title { font-size: 13px; font-weight: 600; color: var(--text); }
+    .opp-score {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+    .priority-CRITICAL { background: rgba(239,68,68,0.15); color: #f87171; }
+    .priority-URGENT   { background: rgba(245,158,11,0.15); color: #fbbf24; }
+    .priority-HIGH     { background: rgba(251,146,60,0.15); color: #fb923c; }
+    .priority-MEDIUM   { background: rgba(59,130,246,0.15); color: #60a5fa; }
+    .priority-LOW      { background: rgba(34,197,94,0.15); color: #4ade80; }
+    .opp-meta { color: var(--muted); font-size: 11px; display: flex; gap: 12px; flex-wrap: wrap; }
+    .opp-value { color: var(--yellow); font-weight: 500; }
+
+    /* SCORE BARS */
+    .score-bar-row { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .score-bar-label { width: 140px; color: var(--muted); font-size: 11px; flex-shrink: 0; }
+    .score-bar-track { flex: 1; height: 5px; background: var(--border); border-radius: 3px; }
+    .score-bar-fill { height: 5px; border-radius: 3px; background: var(--accent); transition: width 0.6s ease; }
+    .score-bar-val { width: 32px; text-align: right; font-size: 11px; color: var(--text); flex-shrink: 0; }
+
+    /* INSIGHT ITEMS */
+    .insight-item {
+      display: flex;
+      gap: 10px;
+      padding: 10px 0;
+      border-bottom: 1px solid var(--border);
+    }
+    .insight-item:last-child { border-bottom: none; }
+    .insight-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 5px; }
+    .insight-dot.high { background: var(--red); }
+    .insight-dot.medium { background: var(--yellow); }
+    .insight-dot.low { background: var(--green); }
+    .insight-text { font-size: 12px; color: var(--text); }
+    .insight-ibm { font-size: 11px; color: var(--accent); margin-top: 2px; }
+
+    /* SECTION HEADER */
+    .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+    .section-title { font-size: 15px; font-weight: 600; }
+    .section-count { font-size: 12px; color: var(--muted); }
+
+    /* COMPANY FILTER */
+    .company-filter { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 16px; }
+    .company-btn {
+      padding: 5px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--muted);
+      font-size: 12px;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.15s;
+    }
+    .company-btn:hover { border-color: var(--accent); color: var(--accent); }
+    .company-btn.active { border-color: var(--accent); background: rgba(59,130,246,0.12); color: var(--accent); }
+
+    /* LOADING */
+    .loading { color: var(--muted); font-size: 13px; padding: 20px 0; text-align: center; }
+    .error-msg { color: var(--red); font-size: 12px; padding: 12px; background: rgba(239,68,68,0.08); border-radius: 6px; }
+
+    /* DIGEST */
+    .digest-section { margin-bottom: 24px; }
+    .digest-label {
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    /* SEARCH */
+    .search-input {
+      width: 100%;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+      padding: 8px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-family: inherit;
+      outline: none;
+      margin-bottom: 16px;
+    }
+    .search-input:focus { border-color: var(--accent); }
+    .search-input::placeholder { color: var(--muted); }
+
+    /* TIMESTAMP */
+    .timestamp { color: var(--muted); font-size: 11px; margin-top: 8px; }
+
+    /* RIG VIZ */
+    .rig-bars { display: flex; gap: 6px; align-items: flex-end; height: 48px; margin-top: 8px; }
+    .rig-bar { flex: 1; background: var(--accent); border-radius: 3px 3px 0 0; opacity: 0.7; min-height: 4px; }
+
+    /* SCROLLABLE */
+    .scrollable { max-height: 400px; overflow-y: auto; }
+    .scrollable::-webkit-scrollbar { width: 4px; }
+    .scrollable::-webkit-scrollbar-track { background: transparent; }
+    .scrollable::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+    /* LIQUID LOGO PANEL */
+    #liquid-logo-frame {
+      width: 100%;
+      height: calc(100vh - 110px);
+      border: none;
+      border-radius: 10px;
+      display: block;
+    }
+  </style>
+</head>
+<body>
+
+<!-- COMMAND BOARD BACKGROUND -->
+<div id="shader-bg">
+
+  <!-- cityscape -->
+  <div id="cb-city">
+    <svg viewBox="0 0 1200 500" preserveAspectRatio="xMidYMax meet" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="cbBldg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#040e1c"/>
+          <stop offset="100%" stop-color="#020810"/>
+        </linearGradient>
+      </defs>
+      <g fill="url(#cbBldg)" opacity="0.65">
+        <rect x="0" y="310" width="38" height="190"/><rect x="30" y="280" width="22" height="220"/>
+        <rect x="48" y="300" width="30" height="200"/><rect x="72" y="250" width="18" height="250"/>
+        <rect x="86" y="270" width="40" height="230"/><rect x="120" y="220" width="25" height="280"/>
+        <rect x="140" y="260" width="35" height="240"/><rect x="168" y="230" width="20" height="270"/>
+        <rect x="184" y="200" width="45" height="300"/><rect x="224" y="240" width="28" height="260"/>
+        <rect x="248" y="210" width="20" height="290"/><rect x="264" y="180" width="50" height="320"/>
+        <rect x="308" y="230" width="24" height="270"/><rect x="328" y="150" width="32" height="350"/>
+        <rect x="355" y="200" width="18" height="300"/><rect x="370" y="240" width="44" height="260"/>
+        <rect x="410" y="190" width="20" height="310"/><rect x="428" y="160" width="55" height="340"/>
+        <rect x="478" y="220" width="22" height="280"/><rect x="496" y="170" width="38" height="330"/>
+        <rect x="530" y="140" width="28" height="360"/><rect x="555" y="190" width="48" height="310"/>
+        <rect x="598" y="210" width="24" height="290"/><rect x="618" y="155" width="35" height="345"/>
+        <rect x="648" y="185" width="20" height="315"/><rect x="665" y="140" width="52" height="360"/>
+        <rect x="712" y="200" width="26" height="300"/><rect x="735" y="170" width="40" height="330"/>
+        <rect x="770" y="220" width="22" height="280"/><rect x="788" y="160" width="38" height="340"/>
+        <rect x="822" y="195" width="28" height="305"/><rect x="846" y="150" width="50" height="350"/>
+        <rect x="892" y="210" width="20" height="290"/><rect x="908" y="175" width="44" height="325"/>
+        <rect x="948" y="230" width="25" height="270"/><rect x="968" y="195" width="35" height="305"/>
+        <rect x="1000" y="160" width="48" height="340"/><rect x="1044" y="210" width="22" height="290"/>
+        <rect x="1062" y="180" width="38" height="320"/><rect x="1096" y="200" width="30" height="300"/>
+        <rect x="1122" y="155" width="45" height="345"/><rect x="1162" y="220" width="38" height="280"/>
+      </g>
+      <g fill="rgba(0,160,255,0.28)">
+        <rect x="125" y="230" width="3" height="3"/><rect x="130" y="230" width="3" height="3"/>
+        <rect x="190" y="210" width="3" height="3"/><rect x="196" y="215" width="3" height="3"/>
+        <rect x="270" y="192" width="3" height="3"/><rect x="278" y="192" width="3" height="3"/>
+        <rect x="332" y="165" width="3" height="3"/><rect x="338" y="158" width="3" height="3"/>
+        <rect x="432" y="172" width="3" height="3"/><rect x="440" y="178" width="3" height="3"/>
+        <rect x="500" y="180" width="3" height="3"/><rect x="508" y="175" width="3" height="3"/>
+        <rect x="535" y="150" width="3" height="3"/><rect x="543" y="156" width="3" height="3"/>
+        <rect x="622" y="163" width="3" height="3"/><rect x="628" y="168" width="3" height="3"/>
+        <rect x="668" y="150" width="3" height="3"/><rect x="676" y="145" width="3" height="3"/>
+        <rect x="740" y="180" width="3" height="3"/><rect x="748" y="175" width="3" height="3"/>
+        <rect x="850" y="160" width="3" height="3"/><rect x="858" y="165" width="3" height="3"/>
+        <rect x="1005" y="170" width="3" height="3"/><rect x="1013" y="175" width="3" height="3"/>
+        <rect x="1066" y="188" width="3" height="3"/><rect x="1074" y="183" width="3" height="3"/>
+        <rect x="1126" y="163" width="3" height="3"/><rect x="1134" y="168" width="3" height="3"/>
+      </g>
+      <ellipse cx="600" cy="490" rx="550" ry="55" fill="rgba(0,80,180,0.14)"/>
+      <ellipse cx="600" cy="495" rx="380" ry="30" fill="rgba(0,60,150,0.09)"/>
+    </svg>
+  </div>
+
+  <!-- table glow -->
+  <div id="cb-tglow"></div>
+
+  <!-- table surface -->
+  <div id="cb-table"></div>
+
+  <!-- scan line -->
+  <div id="cb-scan"></div>
+
+  <!-- holo stage -->
+  <div id="cb-stage">
+
+    <!-- grid floor projection -->
+    <svg style="position:absolute;bottom:-4%;left:50%;transform:translateX(-50%) perspective(400px) rotateX(72deg);width:520px;height:280px;opacity:0.3;" viewBox="0 0 520 280" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="cbGridFade" cx="50%" cy="50%" r="55%">
+          <stop offset="0%" stop-color="rgba(0,180,255,0.35)"/>
+          <stop offset="100%" stop-color="rgba(0,60,160,0)"/>
+        </radialGradient>
+      </defs>
+      <g stroke="rgba(0,160,255,0.3)" stroke-width="0.6" fill="none">
+        <line x1="0" y1="280" x2="520" y2="280"/><line x1="0" y1="252" x2="520" y2="252"/>
+        <line x1="0" y1="224" x2="520" y2="224"/><line x1="0" y1="196" x2="520" y2="196"/>
+        <line x1="0" y1="168" x2="520" y2="168"/><line x1="0" y1="140" x2="520" y2="140"/>
+        <line x1="0" y1="112" x2="520" y2="112"/><line x1="0" y1="84"  x2="520" y2="84"/>
+        <line x1="0" y1="56"  x2="520" y2="56"/> <line x1="0" y1="28"  x2="520" y2="28"/>
+        <line x1="0" y1="0"   x2="520" y2="0"/>
+      </g>
+      <g stroke="rgba(0,160,255,0.3)" stroke-width="0.6" fill="none">
+        <line x1="0"   y1="0" x2="0"   y2="280"/><line x1="40"  y1="0" x2="40"  y2="280"/>
+        <line x1="80"  y1="0" x2="80"  y2="280"/><line x1="120" y1="0" x2="120" y2="280"/>
+        <line x1="160" y1="0" x2="160" y2="280"/><line x1="200" y1="0" x2="200" y2="280"/>
+        <line x1="240" y1="0" x2="240" y2="280"/><line x1="280" y1="0" x2="280" y2="280"/>
+        <line x1="320" y1="0" x2="320" y2="280"/><line x1="360" y1="0" x2="360" y2="280"/>
+        <line x1="400" y1="0" x2="400" y2="280"/><line x1="440" y1="0" x2="440" y2="280"/>
+        <line x1="480" y1="0" x2="480" y2="280"/><line x1="520" y1="0" x2="520" y2="280"/>
+      </g>
+      <ellipse cx="260" cy="140" rx="260" ry="130" fill="url(#cbGridFade)"/>
+    </svg>
+
+    <!-- globe -->
+    <div id="cb-globe-wrap">
+      <div class="cb-orbit cb-orbit-1"></div>
+      <div class="cb-orbit cb-orbit-2"></div>
+      <div class="cb-orbit cb-orbit-3"></div>
+      <div class="cb-pulse"></div>
+      <div class="cb-pulse"></div>
+      <div class="cb-pulse"></div>
+      <div class="cb-atom" style="top:4%;left:48%;"></div>
+      <div class="cb-atom" style="top:48%;left:96%;"></div>
+      <div class="cb-atom" style="top:92%;left:50%;"></div>
+      <div class="cb-atom" style="top:50%;left:2%;"></div>
+      <div class="cb-atom" style="top:20%;left:88%;width:3px;height:3px;"></div>
+      <div class="cb-atom" style="top:76%;left:10%;width:3px;height:3px;"></div>
+      <div id="cb-globe">
+        <svg width="160" height="160" viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg" style="position:absolute;top:0;left:0;opacity:0.5;">
+          <ellipse cx="80" cy="80" rx="78" ry="20" fill="none" stroke="rgba(0,200,255,0.45)" stroke-width="0.8"/>
+          <ellipse cx="80" cy="80" rx="78" ry="40" fill="none" stroke="rgba(0,200,255,0.3)" stroke-width="0.6"/>
+          <ellipse cx="80" cy="80" rx="78" ry="60" fill="none" stroke="rgba(0,200,255,0.22)" stroke-width="0.5"/>
+          <ellipse cx="80" cy="80" rx="30" ry="78" fill="none" stroke="rgba(0,200,255,0.35)" stroke-width="0.7"/>
+          <ellipse cx="80" cy="80" rx="55" ry="78" fill="none" stroke="rgba(0,180,255,0.28)" stroke-width="0.5"/>
+          <line x1="80" y1="2" x2="80" y2="158" stroke="rgba(0,200,255,0.3)" stroke-width="0.6"/>
+          <path d="M55 55 Q65 48 75 55 Q80 62 72 68 Q62 70 55 63 Z" fill="rgba(0,160,255,0.22)" stroke="rgba(0,200,255,0.35)" stroke-width="0.5"/>
+          <path d="M85 50 Q95 45 105 55 Q108 65 100 70 Q90 72 85 63 Z" fill="rgba(0,160,255,0.18)" stroke="rgba(0,200,255,0.3)" stroke-width="0.5"/>
+          <path d="M62 80 Q72 75 80 83 Q82 92 74 96 Q64 95 60 87 Z" fill="rgba(0,160,255,0.16)" stroke="rgba(0,200,255,0.28)" stroke-width="0.5"/>
+          <circle cx="68" cy="60" r="2.5" fill="rgba(0,255,200,0.65)"/>
+          <circle cx="95" cy="56" r="2"   fill="rgba(0,255,200,0.55)"/>
+          <circle cx="105" cy="80" r="1.8" fill="rgba(0,220,255,0.6)"/>
+          <circle cx="52"  cy="88" r="1.5" fill="rgba(0,200,255,0.55)"/>
+        </svg>
+      </div>
+      <div id="cb-globe-label">◆ GLOBAL INDUSTRY MAP ◆</div>
+    </div>
+
+    <!-- light stream connectors -->
+    <svg style="position:absolute;inset:0;width:100%;height:100%;pointer-events:none;" viewBox="0 0 900 520" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <linearGradient id="cbStream" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%"   stop-color="rgba(0,200,255,0)"/>
+          <stop offset="50%"  stop-color="rgba(0,200,255,0.4)"/>
+          <stop offset="100%" stop-color="rgba(0,200,255,0)"/>
+        </linearGradient>
+        <filter id="cbGlow"><feGaussianBlur stdDeviation="2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+      </defs>
+      <path d="M148,146 Q250,60 450,90"  fill="none" stroke="url(#cbStream)" stroke-width="1.2" filter="url(#cbGlow)" opacity="0.6"/>
+      <path d="M144,286 Q260,200 450,90" fill="none" stroke="url(#cbStream)" stroke-width="1.2" filter="url(#cbGlow)" opacity="0.6"/>
+      <path d="M783,156 Q660,70 450,90"  fill="none" stroke="url(#cbStream)" stroke-width="1.2" filter="url(#cbGlow)" opacity="0.6"/>
+      <path d="M792,286 Q660,200 450,90" fill="none" stroke="url(#cbStream)" stroke-width="1"   filter="url(#cbGlow)" opacity="0.5"/>
+      <path d="M855,187 Q700,130 450,90" fill="none" stroke="url(#cbStream)" stroke-width="0.8" filter="url(#cbGlow)" opacity="0.4"/>
+    </svg>
+
+    <!-- MARKET MONITOR sphere -->
+    <div class="cb-sphere" id="cb-s-market">
+      <div class="cb-stitle">◈ MARKET MONITOR (LIVE)</div>
+      <div class="cb-sc">
+        <div class="cb-dr"><span>BRENT CRUDE</span><span class="cb-up">$87.42 ▲</span></div>
+        <div class="cb-dr"><span>WTI CRUDE</span><span class="cb-up">$83.15 ▲</span></div>
+        <div class="cb-dr"><span>NAT GAS HH</span><span class="cb-dn">$2.61 ▼</span></div>
+        <div class="cb-dr"><span>LNG SPOT</span><span class="cb-up">$12.80 ▲</span></div>
+        <div class="cb-dr"><span>NYMEX RBOB</span><span class="cb-up">$2.43 ▲</span></div>
+        <svg width="100%" height="32" viewBox="0 0 130 32" xmlns="http://www.w3.org/2000/svg" style="margin-top:3px;">
+          <polyline points="0,26 15,22 28,20 40,24 52,16 64,12 76,14 88,8 100,10 114,6 130,4" fill="none" stroke="rgba(0,220,255,0.75)" stroke-width="1.2"/>
+          <polyline points="0,30 15,28 28,26 40,28 52,24 64,28 76,26 88,24 100,26 114,22 130,20" fill="none" stroke="rgba(0,255,140,0.55)" stroke-width="1"/>
+        </svg>
+        <div class="cb-dr"><span>24H VOL</span><span style="color:rgba(180,100,255,0.8)">HIGH</span></div>
+      </div>
+    </div>
+
+    <!-- CLIENT INTEL sphere -->
+    <div class="cb-sphere" id="cb-s-client">
+      <div class="cb-stitle">◈ CLIENT INTEL (PROFILE)</div>
+      <div class="cb-sc">
+        <div class="cb-dr"><span><span class="cb-nd"></span>ExxonMobil</span><span class="cb-up">TIER 1</span></div>
+        <div class="cb-dr"><span><span class="cb-nd"></span>Shell plc</span><span class="cb-up">TIER 1</span></div>
+        <div class="cb-dr"><span><span class="cb-nd"></span>Chevron Corp</span><span style="color:rgba(255,200,0,0.85)">ACTIVE</span></div>
+        <div class="cb-dr"><span><span class="cb-nd"></span>BP Global</span><span class="cb-up">TIER 2</span></div>
+        <svg width="100%" height="36" viewBox="0 0 120 36" xmlns="http://www.w3.org/2000/svg" style="margin-top:3px;">
+          <circle cx="60" cy="18" r="7" fill="none" stroke="rgba(0,200,255,0.55)" stroke-width="1"/>
+          <circle cx="35" cy="9"  r="4" fill="none" stroke="rgba(0,200,255,0.4)" stroke-width="0.8"/>
+          <circle cx="85" cy="9"  r="4" fill="none" stroke="rgba(0,200,255,0.4)" stroke-width="0.8"/>
+          <circle cx="30" cy="27" r="3" fill="none" stroke="rgba(0,200,255,0.35)" stroke-width="0.8"/>
+          <circle cx="90" cy="27" r="3" fill="none" stroke="rgba(0,200,255,0.35)" stroke-width="0.8"/>
+          <line x1="60" y1="18" x2="35" y2="9"  stroke="rgba(0,180,255,0.38)" stroke-width="0.7"/>
+          <line x1="60" y1="18" x2="85" y2="9"  stroke="rgba(0,180,255,0.38)" stroke-width="0.7"/>
+          <line x1="60" y1="18" x2="30" y2="27" stroke="rgba(0,180,255,0.32)" stroke-width="0.7"/>
+          <line x1="60" y1="18" x2="90" y2="27" stroke="rgba(0,180,255,0.32)" stroke-width="0.7"/>
+          <circle cx="60" cy="18" r="3" fill="rgba(0,200,255,0.55)"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- NEWS AGENT sphere -->
+    <div class="cb-sphere" id="cb-s-news">
+      <div class="cb-stitle">◈ NEWS AGENT (AGGREGATE)</div>
+      <div class="cb-sc">
+        <div class="cb-nl"><span class="cb-pos">[+]</span> Chevron acquires $6.3B deepwater asset → <span class="cb-pos">BULLISH</span></div>
+        <div class="cb-nl"><span class="cb-neg">[-]</span> OPEC+ extends output cuts Q3 2025 → <span class="cb-neg">SUPPLY TIGHT</span></div>
+        <div class="cb-nl"><span class="cb-pos">[+]</span> Shell green-lights $4.1B LNG expansion → <span class="cb-pos">POSITIVE</span></div>
+        <div class="cb-nl"><span class="cb-neu">[~]</span> ExxonMobil mixed Q2 upstream margins → <span class="cb-neu">NEUTRAL</span></div>
+        <div class="cb-nl"><span class="cb-neg">[-]</span> EU carbon levy impact refinery -3.2% → <span class="cb-neg">BEARISH</span></div>
+        <div class="cb-nl"><span class="cb-pos">[+]</span> TotalEnergies wins 2 exploration blocks → <span class="cb-pos">POSITIVE</span></div>
+        <div class="cb-nl"><span class="cb-pos">[+]</span> US shale output hits record 13.4Mbpd → <span class="cb-pos">BULLISH</span></div>
+        <div style="margin-top:3px;font-size:4.8px;color:rgba(0,180,255,0.45);font-family:'Courier New',monospace;letter-spacing:.4px;">POS:5 NEG:2 NEU:1 | LIVE</div>
+      </div>
+    </div>
+
+    <!-- COMPETITOR ANALYSIS sphere -->
+    <div class="cb-sphere" id="cb-s-competitor">
+      <div class="cb-stitle">◈ COMPETITOR ANALYSIS</div>
+      <div class="cb-sc">
+        <div class="cb-dr"><span>SLB</span><span class="cb-up">▲ 8.4%</span></div>
+        <div class="cb-dr"><span>Halliburton</span><span class="cb-up">▲ 5.1%</span></div>
+        <div class="cb-dr"><span>Baker Hughes</span><span class="cb-dn">▼ 1.2%</span></div>
+        <div class="cb-dr"><span>TechnipFMC</span><span class="cb-up">▲ 3.7%</span></div>
+        <svg width="100%" height="28" viewBox="0 0 100 28" xmlns="http://www.w3.org/2000/svg" style="margin-top:2px;">
+          <rect x="5"  y="16" width="14" height="12" fill="rgba(0,200,255,0.45)"/>
+          <rect x="26" y="10" width="14" height="18" fill="rgba(0,160,255,0.4)"/>
+          <rect x="47" y="18" width="14" height="10" fill="rgba(255,80,80,0.38)"/>
+          <rect x="68" y="13" width="14" height="15" fill="rgba(0,200,255,0.4)"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- DEAL RADAR sphere -->
+    <div class="cb-sphere" id="cb-s-deal">
+      <div class="cb-stitle" style="font-size:5.5px;">◈ DEAL RADAR</div>
+      <div class="cb-sc">
+        <svg width="70" height="70" viewBox="0 0 70 70" xmlns="http://www.w3.org/2000/svg" style="margin:2px auto;display:block;">
+          <circle cx="35" cy="35" r="32" fill="none" stroke="rgba(0,180,255,0.28)" stroke-width="0.7"/>
+          <circle cx="35" cy="35" r="22" fill="none" stroke="rgba(0,180,255,0.22)" stroke-width="0.7"/>
+          <circle cx="35" cy="35" r="12" fill="none" stroke="rgba(0,180,255,0.28)" stroke-width="0.7"/>
+          <line x1="3"  y1="35" x2="67" y2="35" stroke="rgba(0,160,255,0.18)" stroke-width="0.6"/>
+          <line x1="35" y1="3"  x2="35" y2="67" stroke="rgba(0,160,255,0.18)" stroke-width="0.6"/>
+          <line x1="12" y1="12" x2="58" y2="58" stroke="rgba(0,160,255,0.14)" stroke-width="0.6"/>
+          <line x1="58" y1="12" x2="12" y2="58" stroke="rgba(0,160,255,0.14)" stroke-width="0.6"/>
+          <line x1="35" y1="35" x2="62" y2="14" stroke="rgba(0,220,255,0.5)" stroke-width="1.2"/>
+          <circle cx="52" cy="18" r="2.5" fill="rgba(0,255,140,0.8)"/>
+          <circle cx="20" cy="28" r="1.8" fill="rgba(0,255,200,0.65)"/>
+          <circle cx="48" cy="46" r="2"   fill="rgba(0,220,255,0.75)"/>
+          <circle cx="28" cy="52" r="1.5" fill="rgba(255,200,0,0.65)"/>
+        </svg>
+        <div style="font-size:4.8px;color:rgba(0,200,255,0.7);text-align:center;font-family:'Courier New',monospace;">4 SIGNALS ACTIVE</div>
+      </div>
+    </div>
+
+    <!-- GAUGE panel -->
+    <div class="cb-panel" id="cb-p-gauge">
+      <div class="cb-ph">OPPORTUNITY SCORE</div>
+      <div class="cb-gauge-wrap">
+        <div class="cb-gauge-arc"></div>
+        <div class="cb-gauge-needle"></div>
+        <div class="cb-gauge-val">91</div>
+      </div>
+      <div style="text-align:center;margin-top:4px;">
+        <span style="font-size:6px;color:rgba(0,255,140,0.9);letter-spacing:1px;font-family:'Courier New',monospace;text-shadow:0 0 6px rgba(0,255,140,0.6);">▲ VERY HIGH PRIORITY</span>
+      </div>
+    </div>
+
+    <!-- ACTION PLAN panel -->
+    <div class="cb-panel" id="cb-p-action">
+      <div class="cb-ph">◆ INTELLIGENCE DIGEST &amp; ACTION PLAN</div>
+      <div class="cb-pl">— ANALYZE CHEVRON DEAL</div>
+      <div class="cb-pl" style="padding-left:10px;color:rgba(0,180,255,0.6);">→ Initiate Due Diligence Protocol</div>
+      <div class="cb-pl" style="padding-left:10px;color:rgba(0,180,255,0.6);">→ Assess Deepwater Market Impact</div>
+      <div class="cb-pl" style="margin-top:3px;">— SHELL LNG EXPANSION SIGNAL</div>
+      <div class="cb-pl" style="padding-left:10px;color:rgba(0,180,255,0.6);">→ Schedule Exec Briefing: LNG Desk</div>
+      <div class="cb-pl" style="padding-left:10px;color:rgba(0,180,255,0.6);">→ Update CRM — Opp Score: 91</div>
+      <div class="cb-pl" style="margin-top:3px;color:rgba(255,200,0,0.8);">⚡ NEXT → CHEVRON OUTREACH IN 2H</div>
+    </div>
+
+    <!-- WORKFLOW STATUS panel -->
+    <div class="cb-panel" id="cb-p-workflow">
+      <div class="cb-ph">◆ WORKFLOW STATUS</div>
+      <div class="cb-pl"><span class="cb-chk">[✓]</span> OP. QUALIFICATION</div>
+      <div class="cb-pl"><span class="cb-chk">[✓]</span> MARKET DATA FETCH</div>
+      <div class="cb-pl"><span class="cb-chk">[✓]</span> NEWS AGGREGATION</div>
+      <div class="cb-pl"><span class="cb-chk">[✓]</span> SENTIMENT ANALYSIS</div>
+      <div class="cb-pl"><span class="cb-chk">[✓]</span> CRM UPDATES</div>
+      <div class="cb-pl"><span class="cb-chk">[✓]</span> DEAL SIGNAL SCAN</div>
+      <div class="cb-pl"><span class="cb-pend">[▶]</span> SLACK SYNC (ACTIVE)</div>
+      <div style="margin-top:4px;height:1px;background:rgba(0,160,255,0.2);"></div>
+      <div style="font-size:5px;color:rgba(0,255,140,0.65);margin-top:3px;letter-spacing:.8px;font-family:'Courier New',monospace;text-shadow:0 0 5px rgba(0,255,140,0.45);">6/7 COMPLETE — SYSTEM LIVE</div>
+    </div>
+
+  </div><!-- /cb-stage -->
+
+  <!-- status chips -->
+  <div id="cb-status-bar">
+    <div class="cb-chip"><span class="cb-live-dot"></span>LIVE FEED ACTIVE</div>
+    <div class="cb-chip">BRENT: $87.42</div>
+    <div class="cb-chip">OPP SCORE: 91</div>
+    <div class="cb-chip">SIGNALS: 4</div>
+    <div class="cb-chip"><span class="cb-live-dot"></span>CRM SYNCED</div>
+  </div>
+
+</div>
+
+<!-- HEADER -->
+<div class="header">
+  <div class="header-left">
+    <div class="logo">🛢️ Oil&amp;<span>Gas</span> Intelligence</div>
+    <div class="badge">IBM BOBATHON</div>
+  </div>
+  <div class="header-right">
+    <span><span class="status-dot" id="statusDot"></span><span class="status-text" id="statusText">Connecting...</span></span>
+    <button class="refresh-btn" onclick="refreshAll()">↻ Refresh</button>
+  </div>
+</div>
+
+<!-- NAV -->
+<div class="nav">
+  <button class="nav-tab active" onclick="switchTab('overview', this)">Overview</button>
+  <button class="nav-tab" onclick="switchTab('market', this)">Market Monitor</button>
+  <button class="nav-tab" onclick="switchTab('news', this)">News &amp; Intel</button>
+  <button class="nav-tab" onclick="switchTab('opportunities', this)">Deal Radar</button>
+  <button class="nav-tab" onclick="switchTab('digest', this)">Digest</button>
+  <button class="nav-tab" onclick="switchTab('liquid', this)">Liquid Logo</button>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- ===================== OVERVIEW ===================== -->
+  <div class="page active" id="page-overview">
+    <div class="grid-3" id="overview-stats">
+      <div class="card"><div class="loading">Loading...</div></div>
+      <div class="card"><div class="loading">Loading...</div></div>
+      <div class="card"><div class="loading">Loading...</div></div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Market Prices</div>
+        <div id="overview-prices"><div class="loading">Loading...</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Market Insights</div>
+        <div id="overview-insights"><div class="loading">Loading...</div></div>
+      </div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Top News</div>
+        <div id="overview-news" class="scrollable"><div class="loading">Loading...</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Top Opportunities</div>
+        <div id="overview-opps" class="scrollable"><div class="loading">Loading...</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== MARKET ===================== -->
+  <div class="page" id="page-market">
+    <div class="grid-3" id="market-stats">
+      <div class="card"><div class="loading">Loading...</div></div>
+      <div class="card"><div class="loading">Loading...</div></div>
+      <div class="card"><div class="loading">Loading...</div></div>
+    </div>
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-title">Crude Oil Prices</div>
+        <div id="market-crude"><div class="loading">Loading...</div></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Natural Gas &amp; Refining</div>
+        <div id="market-gas"><div class="loading">Loading...</div></div>
+      </div>
+    </div>
+    <div class="card" style="margin-bottom:20px">
+      <div class="card-title">IBM Solution Relevance</div>
+      <div id="market-ibm"><div class="loading">Loading...</div></div>
+    </div>
+    <div class="card">
+      <div class="card-title">Full Market Summary</div>
+      <div id="market-summary" style="color:var(--muted); font-size:13px; line-height:1.7;"></div>
+      <div class="timestamp" id="market-timestamp"></div>
+    </div>
+  </div>
+
+  <!-- ===================== NEWS ===================== -->
+  <div class="page" id="page-news">
+    <div class="company-filter" id="company-filter">
+      <button class="company-btn active" onclick="filterCompany('', this)">All</button>
+      <button class="company-btn" onclick="filterCompany('ExxonMobil', this)">ExxonMobil</button>
+      <button class="company-btn" onclick="filterCompany('Chevron', this)">Chevron</button>
+      <button class="company-btn" onclick="filterCompany('Shell', this)">Shell</button>
+      <button class="company-btn" onclick="filterCompany('BP', this)">BP</button>
+      <button class="company-btn" onclick="filterCompany('Halliburton', this)">Halliburton</button>
+      <button class="company-btn" onclick="filterCompany('SLB', this)">SLB</button>
+    </div>
+    <input class="search-input" id="news-search" placeholder="Search news by keyword..." oninput="filterNews()" />
+    <div class="card">
+      <div class="section-header">
+        <span class="section-title" id="news-section-title">Top Stories</span>
+        <span class="section-count" id="news-count"></span>
+      </div>
+      <div id="news-list" class="scrollable"><div class="loading">Loading...</div></div>
+    </div>
+  </div>
+
+  <!-- ===================== OPPORTUNITIES ===================== -->
+  <div class="page" id="page-opportunities">
+    <div class="grid-3" id="opp-stats">
+      <div class="card"><div class="loading">Loading...</div></div>
+      <div class="card"><div class="loading">Loading...</div></div>
+      <div class="card"><div class="loading">Loading...</div></div>
+    </div>
+    <div class="card">
+      <div class="section-header">
+        <span class="section-title">Detected Opportunities</span>
+        <span class="section-count" id="opp-count"></span>
+      </div>
+      <div id="opp-list" class="scrollable"><div class="loading">Loading...</div></div>
+    </div>
+  </div>
+
+  <!-- ===================== DIGEST ===================== -->
+  <div class="page" id="page-digest">
+    <div class="card">
+      <div class="section-header">
+        <span class="section-title">Intelligence Digest</span>
+        <div style="display:flex; gap:10px; align-items:center;">
+          <select id="digest-company" onchange="loadDigest()" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:5px 10px;border-radius:6px;font-size:12px;font-family:inherit;cursor:pointer;">
+            <option value="">All Companies</option>
+            <option>ExxonMobil</option>
+            <option>Chevron</option>
+            <option>Shell</option>
+            <option>BP</option>
+            <option>Halliburton</option>
+            <option>SLB</option>
+            <option>ConocoPhillips</option>
+          </select>
+        </div>
+      </div>
+      <div id="digest-content"><div class="loading">Loading...</div></div>
+    </div>
+  </div>
+
+  <!-- ===================== LIQUID LOGO ===================== -->
+  <div class="page" id="page-liquid">
+    <iframe id="liquid-logo-frame" src="liquid-logo/index.html" title="Liquid Logo"></iframe>
+  </div>
+
+</div>
+
+<script>
+  const API = 'http://localhost:3000';
+  let allNews = [];
+  let currentCompany = '';
+
+  // ─── UTILS ───────────────────────────────────────────────
+  function fmt(n, decimals=2) { return Number(n).toFixed(decimals); }
+  function fmtM(n) { return '$' + (n/1000000).toFixed(1) + 'M'; }
+  function changeClass(n) { return n > 0 ? 'up' : n < 0 ? 'down' : 'neutral'; }
+  function changeArrow(n) { return n > 0 ? '▲' : n < 0 ? '▼' : '—'; }
+  function categoryTag(cat) {
+    const map = { market:'tag-market', policy:'tag-policy', company:'tag-company', emissions:'tag-emissions', technology:'tag-tech' };
+    return map[cat] || 'tag-market';
+  }
+  function priorityLabel(p) {
+    const e = { CRITICAL:'🚨', URGENT:'⚠️', HIGH:'🔴', MEDIUM:'🟡', LOW:'🟢' };
+    return (e[p] || '') + ' ' + p;
+  }
+  function timeAgo(ts) {
+    const d = new Date(ts), now = new Date();
+    const m = Math.round((now - d) / 60000);
+    if (m < 60) return m + 'm ago';
+    const h = Math.round(m / 60);
+    if (h < 24) return h + 'h ago';
+    return Math.round(h / 24) + 'd ago';
+  }
+
+  async function apiFetch(path) {
+    const r = await fetch(API + path);
+    if (!r.ok) throw new Error(r.statusText);
+    return r.json();
+  }
+
+  // ─── STATUS ──────────────────────────────────────────────
+  async function checkStatus() {
+    try {
+      await apiFetch('/health');
+      document.getElementById('statusDot').style.background = 'var(--green)';
+      document.getElementById('statusText').textContent = 'API Live';
+    } catch {
+      document.getElementById('statusDot').style.background = 'var(--red)';
+      document.getElementById('statusText').textContent = 'API Offline';
+    }
+  }
+
+  // ─── TAB SWITCHING ───────────────────────────────────────
+  function switchTab(tab, btn) {
+    document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+    document.getElementById('page-' + tab).classList.add('active');
+    btn.classList.add('active');
+    loadTab(tab);
+  }
+
+  function loadTab(tab) {
+    if (tab === 'overview') loadOverview();
+    if (tab === 'market') loadMarket();
+    if (tab === 'news') loadNews('');
+    if (tab === 'opportunities') loadOpportunities();
+    if (tab === 'digest') loadDigest();
+    // 'liquid' tab is a static iframe — no load needed
+  }
+
+  function refreshAll() {
+    const active = document.querySelector('.page.active');
+    const tab = active.id.replace('page-', '');
+    loadTab(tab);
+    checkStatus();
+  }
+
+  // ─── OVERVIEW ────────────────────────────────────────────
+  async function loadOverview() {
+    try {
+      const [marketRes, newsRes, oppRes] = await Promise.all([
+        apiFetch('/api/market-monitor'),
+        apiFetch('/api/news/top?limit=5'),
+        apiFetch('/api/opportunities?limit=5')
+      ]);
+
+      const m = marketRes.data;
+      const news = newsRes.data;
+      const opps = oppRes.data;
+
+      // Stats
+      document.getElementById('overview-stats').innerHTML = `
+        <div class="card">
+          <div class="card-title">WTI Crude</div>
+          <div class="stat-value">$${fmt(m.data.crudeOil.wti.price)}</div>
+          <div class="stat-sub">per barrel</div>
+          <div class="stat-change ${changeClass(m.data.crudeOil.wti.changePercent)}">
+            ${changeArrow(m.data.crudeOil.wti.changePercent)} ${fmt(Math.abs(m.data.crudeOil.wti.changePercent))}%
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">Natural Gas</div>
+          <div class="stat-value">$${fmt(m.data.naturalGas.henryHub.price)}</div>
+          <div class="stat-sub">per MMBtu</div>
+          <div class="stat-change ${changeClass(m.data.naturalGas.henryHub.changePercent)}">
+            ${changeArrow(m.data.naturalGas.henryHub.changePercent)} ${fmt(Math.abs(m.data.naturalGas.henryHub.changePercent))}%
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">US Rig Count</div>
+          <div class="stat-value">${m.data.rigCount.total}</div>
+          <div class="stat-sub">active rigs</div>
+          <div class="stat-change ${changeClass(m.data.rigCount.change)}">
+            ${changeArrow(m.data.rigCount.change)} ${Math.abs(m.data.rigCount.change)} this week
+          </div>
+        </div>
+      `;
+
+      // Prices
+      const brent = m.data.crudeOil.brent;
+      document.getElementById('overview-prices').innerHTML = `
+        ${priceRow('WTI Crude', '$'+fmt(m.data.crudeOil.wti.price)+'/bbl', m.data.crudeOil.wti.changePercent)}
+        ${priceRow('Brent Crude', '$'+fmt(brent.price)+'/bbl', brent.changePercent)}
+        ${priceRow('Henry Hub Gas', '$'+fmt(m.data.naturalGas.henryHub.price)+'/MMBtu', m.data.naturalGas.henryHub.changePercent)}
+        ${priceRow('Crack Spread', '$'+fmt(m.data.refiningMargins.crackSpread.value)+'/bbl', m.data.refiningMargins.crackSpread.change)}
+        ${priceRow('Refinery Util.', m.data.refiningMargins.utilizationRate+'%', null)}
+      `;
+
+      // Insights
+      const insights = (m.insights || []).slice(0, 4);
+      document.getElementById('overview-insights').innerHTML = insights.length ? insights.map(i => `
+        <div class="insight-item">
+          <div class="insight-dot ${i.severity}"></div>
+          <div>
+            <div class="insight-text">${i.message}</div>
+            <div class="insight-ibm">→ ${i.ibmOpportunity}</div>
+          </div>
+        </div>
+      `).join('') : '<div class="loading">No insights available</div>';
+
+      // News
+      const stories = news.stories || [];
+      document.getElementById('overview-news').innerHTML = stories.map(s => newsItem(s)).join('') || '<div class="loading">No news</div>';
+
+      // Opps
+      document.getElementById('overview-opps').innerHTML = (opps || []).map(o => oppItem(o)).join('') || '<div class="loading">No opportunities detected</div>';
+
+    } catch(e) {
+      document.getElementById('overview-stats').innerHTML = `<div class="card"><div class="error-msg">Error: ${e.message}</div></div>`;
+    }
+  }
+
+  // ─── MARKET ──────────────────────────────────────────────
+  async function loadMarket() {
+    try {
+      const res = await apiFetch('/api/market-monitor');
+      const m = res.data;
+      const d = m.data;
+
+      document.getElementById('market-stats').innerHTML = `
+        <div class="card">
+          <div class="card-title">Brent Crude</div>
+          <div class="stat-value">$${fmt(d.crudeOil.brent.price)}</div>
+          <div class="stat-sub">per barrel</div>
+          <div class="stat-change ${changeClass(d.crudeOil.brent.changePercent)}">
+            ${changeArrow(d.crudeOil.brent.changePercent)} ${fmt(Math.abs(d.crudeOil.brent.changePercent))}%
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">OPEC+ Compliance</div>
+          <div class="stat-value">${d.opecCompliance ? d.opecCompliance.complianceRate : '—'}%</div>
+          <div class="stat-sub">production adherence</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Crude Inventory</div>
+          <div class="stat-value">${d.inventoryLevels ? (d.inventoryLevels.crude/1000000).toFixed(0) : '—'}M</div>
+          <div class="stat-sub">barrels</div>
+        </div>
+      `;
+
+      document.getElementById('market-crude').innerHTML = `
+        ${priceRow('WTI', '$'+fmt(d.crudeOil.wti.price)+'/bbl', d.crudeOil.wti.changePercent)}
+        ${priceRow('Brent', '$'+fmt(d.crudeOil.brent.price)+'/bbl', d.crudeOil.brent.changePercent)}
+        ${scoreBar('WTI Change', Math.abs(d.crudeOil.wti.changePercent), 10)}
+        ${scoreBar('Brent Change', Math.abs(d.crudeOil.brent.changePercent), 10)}
+      `;
+
+      document.getElementById('market-gas').innerHTML = `
+        ${priceRow('Henry Hub', '$'+fmt(d.naturalGas.henryHub.price)+'/MMBtu', d.naturalGas.henryHub.changePercent)}
+        ${priceRow('Crack Spread', '$'+fmt(d.refiningMargins.crackSpread.value)+'/bbl', d.refiningMargins.crackSpread.change)}
+        ${priceRow('Utilization Rate', d.refiningMargins.utilizationRate+'%', null)}
+        ${priceRow('Oil Rigs', d.rigCount.oil+' active', null)}
+        ${priceRow('Gas Rigs', d.rigCount.gas+' active', null)}
+      `;
+
+      const relevance = m.ibmRelevance || [];
+      document.getElementById('market-ibm').innerHTML = relevance.length ? relevance.map(r => `
+        <div class="insight-item">
+          <div class="insight-dot medium"></div>
+          <div>
+            <div class="insight-text">${r.condition}</div>
+            <div class="insight-ibm">💡 ${r.ibmSolution} — ${r.rationale}</div>
+          </div>
+        </div>
+      `).join('') : '<div class="loading">No relevance data</div>';
+
+      document.getElementById('market-summary').textContent = m.summary || '';
+      document.getElementById('market-timestamp').textContent = 'Last updated: ' + new Date(d.lastUpdate || Date.now()).toLocaleString();
+
+    } catch(e) {
+      document.getElementById('market-stats').innerHTML = `<div class="card"><div class="error-msg">Error: ${e.message}</div></div>`;
+    }
+  }
+
+  // ─── NEWS ─────────────────────────────────────────────────
+  async function loadNews(company) {
+    currentCompany = company;
+    const titleEl = document.getElementById('news-section-title');
+    document.getElementById('news-list').innerHTML = '<div class="loading">Loading...</div>';
+    try {
+      let res;
+      if (company) {
+        res = await apiFetch('/api/news/company/' + encodeURIComponent(company) + '?limit=20');
+        allNews = res.data.articles || [];
+        titleEl.textContent = company + ' News';
+      } else {
+        res = await apiFetch('/api/news/top?limit=20');
+        allNews = res.data.stories || [];
+        titleEl.textContent = 'Top Stories';
+      }
+      renderNews(allNews);
+    } catch(e) {
+      document.getElementById('news-list').innerHTML = `<div class="error-msg">Error: ${e.message}</div>`;
+    }
+  }
+
+  function filterCompany(company, btn) {
+    document.querySelectorAll('.company-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('news-search').value = '';
+    loadNews(company);
+  }
+
+  function filterNews() {
+    const q = document.getElementById('news-search').value.toLowerCase();
+    if (!q) { renderNews(allNews); return; }
+    renderNews(allNews.filter(n => (n.title||'').toLowerCase().includes(q) || (n.summary||'').toLowerCase().includes(q)));
+  }
+
+  function renderNews(items) {
+    document.getElementById('news-count').textContent = items.length + ' articles';
+    document.getElementById('news-list').innerHTML = items.length
+      ? items.map(s => newsItem(s)).join('')
+      : '<div class="loading">No articles found</div>';
+  }
+
+  // ─── OPPORTUNITIES ────────────────────────────────────────
+  async function loadOpportunities() {
+    try {
+      const [oppRes, statusRes] = await Promise.all([
+        apiFetch('/api/opportunities?limit=20'),
+        apiFetch('/api/opportunities/status')
+      ]);
+      const opps = oppRes.data || [];
+      const status = statusRes.data;
+
+      const critical = opps.filter(o => o.scoring && o.scoring.priority === 'CRITICAL').length;
+      const urgent = opps.filter(o => o.scoring && o.scoring.priority === 'URGENT').length;
+      const high = opps.filter(o => o.scoring && o.scoring.priority === 'HIGH').length;
+
+      document.getElementById('opp-stats').innerHTML = `
+        <div class="card">
+          <div class="card-title">Total Detected</div>
+          <div class="stat-value">${opps.length}</div>
+          <div class="stat-sub">opportunities</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Critical / Urgent</div>
+          <div class="stat-value" style="color:var(--red)">${critical + urgent}</div>
+          <div class="stat-sub">${critical} critical · ${urgent} urgent</div>
+        </div>
+        <div class="card">
+          <div class="card-title">Radar Status</div>
+          <div class="stat-value" style="font-size:18px; color:var(--green)">${status.isMonitoring ? '● Active' : '○ Standby'}</div>
+          <div class="stat-sub">threshold: ${status.alertThresholds ? status.alertThresholds.critical : '—'}+ = critical</div>
+        </div>
+      `;
+
+      document.getElementById('opp-count').textContent = opps.length + ' total';
+      document.getElementById('opp-list').innerHTML = opps.length
+        ? opps.map(o => oppItem(o)).join('')
+        : '<div class="loading">No opportunities detected yet — Deal Radar is scanning...</div>';
+
+    } catch(e) {
+      document.getElementById('opp-stats').innerHTML = `<div class="card"><div class="error-msg">Error: ${e.message}</div></div>`;
+    }
+  }
+
+  // ─── DIGEST ───────────────────────────────────────────────
+  async function loadDigest() {
+    const company = document.getElementById('digest-company').value;
+    document.getElementById('digest-content').innerHTML = '<div class="loading">Generating digest...</div>';
+    try {
+      const url = '/api/intelligence-digest' + (company ? '?company=' + encodeURIComponent(company) : '');
+      const res = await apiFetch(url);
+      const d = res.data;
+      const m = d.marketMonitor;
+      const news = d.topNews;
+      const opps = d.opportunities || [];
+
+      let html = `
+        <div class="digest-section">
+          <div class="digest-label">Market Snapshot</div>
+          <div style="color:var(--muted); font-size:13px; line-height:1.7">${m.summary}</div>
+          <div style="display:flex; gap:24px; margin-top:12px; flex-wrap:wrap">
+            <div><span style="color:var(--muted); font-size:11px">WTI</span><br><strong>$${fmt(m.data.crudeOil.wti.price)}</strong></div>
+            <div><span style="color:var(--muted); font-size:11px">Brent</span><br><strong>$${fmt(m.data.crudeOil.brent.price)}</strong></div>
+            <div><span style="color:var(--muted); font-size:11px">Nat Gas</span><br><strong>$${fmt(m.data.naturalGas.henryHub.price)}</strong></div>
+            <div><span style="color:var(--muted); font-size:11px">Rig Count</span><br><strong>${m.data.rigCount.total}</strong></div>
+          </div>
+        </div>
+        <div class="digest-section">
+          <div class="digest-label">Top News (${(news.stories||[]).length} stories)</div>
+          ${(news.stories||[]).slice(0,5).map(s => newsItem(s)).join('')}
+        </div>
+        <div class="digest-section">
+          <div class="digest-label">Deal Radar (${opps.length} opportunities)</div>
+          ${opps.slice(0,5).map(o => oppItem(o)).join('') || '<div class="loading">No opportunities</div>'}
+        </div>
+      `;
+
+      if (d.companyNews) {
+        html += `
+          <div class="digest-section">
+            <div class="digest-label">${company} — Company News (${(d.companyNews.articles||[]).length} articles)</div>
+            ${(d.companyNews.articles||[]).slice(0,5).map(s => newsItem(s)).join('')}
+          </div>
+        `;
+      }
+
+      html += `<div class="timestamp">Generated: ${new Date(d.timestamp).toLocaleString()}</div>`;
+      document.getElementById('digest-content').innerHTML = html;
+
+    } catch(e) {
+      document.getElementById('digest-content').innerHTML = `<div class="error-msg">Error: ${e.message}</div>`;
+    }
+  }
+
+  // ─── COMPONENT HELPERS ───────────────────────────────────
+  function priceRow(label, val, change) {
+    const cls = change !== null && change !== undefined ? changeClass(change) : '';
+    const badge = change !== null && change !== undefined
+      ? `<span class="price-change ${changeClass(change)}">${changeArrow(change)} ${fmt(Math.abs(change))}%</span>`
+      : '';
+    return `
+      <div class="price-row">
+        <span class="price-label">${label}</span>
+        <span style="display:flex; align-items:center; gap:8px">
+          <span class="price-val">${val}</span>${badge}
+        </span>
+      </div>`;
+  }
+
+  function scoreBar(label, val, max) {
+    const pct = Math.min(100, (val / max) * 100);
+    return `
+      <div class="score-bar-row">
+        <span class="score-bar-label">${label}</span>
+        <div class="score-bar-track"><div class="score-bar-fill" style="width:${pct}%"></div></div>
+        <span class="score-bar-val">${fmt(val, 1)}</span>
+      </div>`;
+  }
+
+  function newsItem(s) {
+    const cat = s.category || 'market';
+    const ibm = s.ibmRelevance ? `<span class="ibm-score">IBM relevance: ${s.ibmRelevance}/100</span>` : '';
+    const cred = s.credibilityScore ? `<span class="news-source">Credibility: ${s.credibilityScore}/100</span>` : '';
+    return `
+      <div class="news-item">
+        <div class="news-headline">${s.title}</div>
+        <div class="news-meta">
+          <span class="news-source">${s.source || ''}</span>
+          <span class="news-tag ${categoryTag(cat)}">${cat}</span>
+          ${ibm}
+          ${cred}
+          ${s.sentiment ? `<span class="news-source">Sentiment: ${s.sentiment}</span>` : ''}
+        </div>
+      </div>`;
+  }
+
+  function oppItem(item) {
+    const opp = item.opportunity || item;
+    const scoring = item.scoring || {};
+    const pri = scoring.priority || 'MEDIUM';
+    const score = scoring.totalScore || '—';
+    const val = opp.estimatedValue ? fmtM(opp.estimatedValue) : '';
+    const recs = (scoring.recommendation || []).slice(0, 2).map(r => `<div style="color:var(--muted);font-size:11px;margin-top:2px">• ${r}</div>`).join('');
+    return `
+      <div class="opp-item">
+        <div class="opp-header">
+          <div class="opp-title">${opp.title}</div>
+          <div class="opp-score priority-${pri}">${score}/100 ${pri}</div>
+        </div>
+        <div class="opp-meta">
+          <span>${opp.client || ''}</span>
+          ${val ? `<span class="opp-value">${val}</span>` : ''}
+          ${opp.businessSegment ? `<span>${opp.businessSegment}</span>` : ''}
+          ${item.detectedAt ? `<span>${timeAgo(item.detectedAt)}</span>` : ''}
+        </div>
+        ${recs}
+      </div>`;
+  }
+
+  // ─── INIT ─────────────────────────────────────────────────
+  checkStatus();
+  loadOverview();
+</script>
+</body>
+</html>

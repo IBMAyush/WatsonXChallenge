@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { motion, useScroll, useTransform, useInView, AnimatePresence, useMotionValue, useSpring } from 'framer-motion';
+import { motion, useScroll, useTransform, useInView, AnimatePresence, useMotionValue, useSpring, useMotionTemplate } from 'framer-motion';
 import ReactLenis from 'lenis/react';
 import {
   Activity, BarChart3, Brain, ChevronRight, Cpu,
@@ -191,12 +191,21 @@ function Nav({ onEnter }) {
 // ── HERO ───────────────────────────────────────────────────
 function Hero({ onEnter }) {
   const { scrollY } = useScroll();
-  const y = useTransform(scrollY, [0, 500], [0, 120]);
-  const opacity = useTransform(scrollY, [0, 400], [1, 0]);
+
+  // Rest of hero fades + drifts up normally
+  const restY       = useTransform(scrollY, [0, 500], [0, 120]);
+  const restOpacity = useTransform(scrollY, [0, 400], [1, 0]);
+
+  // "IBM NEXUS" suck-away: stretches vertically then rockets upward and vanishes
+  const titleScaleY  = useTransform(scrollY, [0, 220], [1, 2.8]);
+  const titleY       = useTransform(scrollY, [0, 380], [0, -340]);
+  const titleOpacity = useTransform(scrollY, [160, 340], [1, 0]);
+  const titleBlur    = useTransform(scrollY, [120, 340], [0, 12]);
 
   return (
-    <section className="relative min-h-screen flex flex-col items-center justify-center px-6 pt-24 pb-32 text-center overflow-hidden">
-      <motion.div style={{ y, opacity }} className="relative z-10 max-w-5xl mx-auto">
+    <section className="relative min-h-screen flex flex-col items-center justify-center px-6 pt-24 pb-32 text-center">
+
+      <motion.div style={{ y: restY, opacity: restOpacity }} className="relative z-10 max-w-5xl mx-auto">
         {/* Badge */}
         <motion.div
           initial={{ opacity: 0, scale: 0.8 }} animate={{ opacity: 1, scale: 1 }}
@@ -209,16 +218,26 @@ function Hero({ onEnter }) {
           <Sparkles className="h-3 w-3" />
         </motion.div>
 
-        {/* H1 — Perspective3DText (skiper28) wrapping the title */}
-        <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.35, duration: 0.7 }}>
-          <Perspective3DText>
-            <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight text-white leading-[1.04] mb-4">
-              IBM{' '}
-              <span style={{ background: 'linear-gradient(135deg,#75b2ff 0%,#a78bfa 45%,#5b96ff 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                NEXUS
-              </span>
-            </h1>
-          </Perspective3DText>
+        {/* H1 — in normal flow, transforms applied via relative positioned wrapper */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35, duration: 0.7 }}
+          className="relative z-20 mb-4"
+          style={{
+            y: titleY,
+            scaleY: titleScaleY,
+            opacity: titleOpacity,
+            filter: useMotionTemplate`blur(${titleBlur}px)`,
+            transformOrigin: 'center top',
+          }}
+        >
+          <h1 className="text-5xl md:text-7xl lg:text-8xl font-black tracking-tight text-white leading-[1.04]">
+            IBM{' '}
+            <span style={{ background: 'linear-gradient(135deg,#75b2ff 0%,#a78bfa 45%,#5b96ff 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              NEXUS
+            </span>
+          </h1>
         </motion.div>
 
         {/* Typewriter */}
