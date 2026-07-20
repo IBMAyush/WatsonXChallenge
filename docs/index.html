@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WatsonX Challenge — Oil & Gas Opportunity Intelligence Assistant</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+      font-size: 15px;
+      line-height: 1.7;
+      background: #ffffff;
+      color: #1f2328;
+    }
+    a { color: #3b82d4; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    /* NAV */
+    nav {
+      background: #1f2328;
+      padding: 0 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      height: 52px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    nav .brand { color: #fff; font-weight: 700; font-size: 16px; letter-spacing: -0.3px; }
+    nav .brand span { color: #3b82d4; }
+    nav ul { list-style: none; display: flex; gap: 24px; }
+    nav ul a { color: #adb5bd; font-size: 13px; }
+    nav ul a:hover { color: #fff; text-decoration: none; }
+
+    /* HERO */
+    .hero {
+      background: #1f2328;
+      color: #fff;
+      padding: 72px 32px 64px;
+      text-align: center;
+    }
+    .hero .badge {
+      display: inline-block;
+      background: #3b82d4;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      padding: 3px 10px;
+      border-radius: 3px;
+      margin-bottom: 20px;
+    }
+    .hero h1 { font-size: 36px; font-weight: 700; line-height: 1.25; margin-bottom: 16px; }
+    .hero h1 span { color: #3b82d4; }
+    .hero p { font-size: 17px; color: #adb5bd; max-width: 600px; margin: 0 auto 32px; }
+    .hero-btns { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+    .btn {
+      display: inline-block;
+      padding: 10px 22px;
+      border-radius: 5px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+    .btn-primary { background: #3b82d4; color: #fff; }
+    .btn-secondary { background: transparent; color: #fff; border: 1px solid #4b5563; }
+
+    /* MAIN LAYOUT */
+    .container { max-width: 860px; margin: 0 auto; padding: 0 24px; }
+
+    section { padding: 56px 0; border-bottom: 1px solid #e5e7eb; }
+    section:last-of-type { border-bottom: none; }
+
+    h2 { font-size: 22px; font-weight: 700; margin-bottom: 20px; }
+    h3 { font-size: 16px; font-weight: 600; margin-bottom: 10px; margin-top: 24px; }
+    p { margin-bottom: 14px; color: #374151; }
+
+    /* FEATURE GRID */
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; margin-top: 8px; }
+    .feature-card {
+      background: #f7f8fa;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      padding: 20px;
+    }
+    .feature-card h3 { margin-top: 0; font-size: 15px; }
+    .feature-card p { font-size: 13px; margin: 0; color: #57606a; }
+
+    /* AGENTS */
+    .agent-list { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
+    .agent-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 14px;
+      background: #f7f8fa;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      padding: 14px 16px;
+    }
+    .agent-dot {
+      width: 10px; height: 10px; border-radius: 50%;
+      background: #3b82d4; margin-top: 6px; flex-shrink: 0;
+    }
+    .agent-item strong { font-size: 14px; display: block; margin-bottom: 2px; }
+    .agent-item span { font-size: 12px; color: #57606a; }
+
+    /* CODE BLOCKS */
+    pre {
+      background: #1f2328;
+      color: #e6edf3;
+      border-radius: 6px;
+      padding: 18px 20px;
+      overflow-x: auto;
+      font-size: 13px;
+      line-height: 1.6;
+      margin: 14px 0;
+    }
+    code { font-family: "SF Mono", "Fira Code", monospace; font-size: 13px; }
+    p code, li code {
+      background: #f0f1f3;
+      color: #1f2328;
+      padding: 1px 5px;
+      border-radius: 3px;
+      font-size: 12px;
+    }
+
+    /* ENV TABLE */
+    table { width: 100%; border-collapse: collapse; margin: 14px 0; font-size: 13px; }
+    th { background: #f7f8fa; text-align: left; padding: 8px 12px; border: 1px solid #e5e7eb; font-weight: 600; }
+    td { padding: 8px 12px; border: 1px solid #e5e7eb; color: #374151; }
+    td code { font-size: 12px; }
+
+    /* WORKFLOW */
+    .steps { counter-reset: step; display: flex; flex-direction: column; gap: 14px; margin-top: 8px; }
+    .step {
+      display: flex; gap: 16px; align-items: flex-start;
+      background: #f7f8fa; border: 1px solid #e5e7eb; border-radius: 6px; padding: 16px;
+    }
+    .step-num {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: #3b82d4; color: #fff;
+      font-size: 13px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      flex-shrink: 0;
+    }
+    .step strong { display: block; font-size: 14px; margin-bottom: 4px; }
+    .step span { font-size: 13px; color: #57606a; }
+
+    /* COMMANDS */
+    .cmd-list { display: flex; flex-direction: column; gap: 8px; margin-top: 8px; }
+    .cmd-item {
+      background: #1f2328; border-radius: 5px; padding: 10px 14px;
+      font-family: "SF Mono", "Fira Code", monospace; font-size: 13px; color: #7dd3fc;
+    }
+
+    /* FOOTER */
+    footer {
+      background: #1f2328; color: #6b7280;
+      text-align: center; padding: 28px 24px;
+      font-size: 12px; border-top: 1px solid #374151;
+    }
+    footer a { color: #adb5bd; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="brand">WatsonX<span>Challenge</span></div>
+  <ul>
+    <li><a href="#features">Features</a></li>
+    <li><a href="#setup">Setup</a></li>
+    <li><a href="#workflow">Git Workflow</a></li>
+    <li><a href="#commands">Slack Commands</a></li>
+    <li><a href="https://github.com/IBMAyush/WatsonXChallenge">GitHub →</a></li>
+  </ul>
+</nav>
+
+<div class="hero">
+  <div class="badge">IBM WatsonX Challenge</div>
+  <h1>Oil &amp; Gas<br><span>Opportunity Intelligence</span> Assistant</h1>
+  <p>An AI-powered Slack assistant that helps IBM teams working with oil and gas clients quickly understand industry developments, identify opportunities, and take action.</p>
+  <div class="hero-btns">
+    <a class="btn btn-primary" href="#setup">Get Started</a>
+    <a class="btn btn-secondary" href="https://github.com/IBMAyush/WatsonXChallenge">View on GitHub</a>
+  </div>
+</div>
+
+<div class="container">
+
+  <!-- FEATURES -->
+  <section id="features">
+    <h2>Key Features</h2>
+    <div class="feature-grid">
+      <div class="feature-card">
+        <h3>Scheduled Intelligence</h3>
+        <p>Every 10 hours the bot generates structured updates — news, market conditions, account insights, IBM relevance, and recommended next steps.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Real-Time Deal Radar</h3>
+        <p>Continuous scanning for major client-related events with proactive Slack alerts for urgent developments and high-value opportunities.</p>
+      </div>
+      <div class="feature-card">
+        <h3>IBM Solution Mapping</h3>
+        <p>Automatically connects market events to relevant IBM offerings: watsonx, Maximo, Consulting, Hybrid Cloud, Cybersecurity, and more.</p>
+      </div>
+      <div class="feature-card">
+        <h3>Workflow Automation</h3>
+        <p>After identifying opportunities, the assistant drafts outreach, creates meeting briefs, logs leads in CRM, and schedules follow-ups.</p>
+      </div>
+    </div>
+
+    <h3>AI Agent Architecture</h3>
+    <div class="agent-list">
+      <div class="agent-item"><div class="agent-dot"></div><div><strong>Market Monitor Agent</strong><span>Tracks crude oil prices, natural gas, rig counts, LNG trends, OPEC+ activity</span></div></div>
+      <div class="agent-item"><div class="agent-dot"></div><div><strong>News, Policy &amp; Emissions Agent</strong><span>Monitors regulatory developments, sustainability trends, and policy changes</span></div></div>
+      <div class="agent-item"><div class="agent-dot"></div><div><strong>Client Intelligence Agent</strong><span>Analyzes account-specific data for ExxonMobil, Chevron, SLB, Halliburton, Shell, BP, ConocoPhillips</span></div></div>
+      <div class="agent-item"><div class="agent-dot"></div><div><strong>Credibility &amp; Deduplication Agent</strong><span>Validates sources and removes duplicate content before delivery</span></div></div>
+      <div class="agent-item"><div class="agent-dot"></div><div><strong>Deal Radar Agent</strong><span>Scores opportunities by client relevance, urgency, IBM fit, and executive visibility</span></div></div>
+      <div class="agent-item"><div class="agent-dot"></div><div><strong>Workflow Automation Agent</strong><span>Executes follow-up actions: outreach drafts, CRM logging, briefing scheduling</span></div></div>
+    </div>
+  </section>
+
+  <!-- SETUP -->
+  <section id="setup">
+    <h2>Getting Started</h2>
+    <h3>Prerequisites</h3>
+    <ul style="padding-left:20px; color:#374151; font-size:14px; margin-bottom:16px;">
+      <li>Node.js 18+</li>
+      <li>Slack workspace with bot permissions</li>
+      <li>API keys for news and market data sources</li>
+      <li>IBM watsonx access</li>
+    </ul>
+
+    <h3>Installation</h3>
+<pre><code># Clone the repository
+git clone git@github.com:IBMAyush/WatsonXChallenge.git
+cd WatsonXChallenge
+
+# Install dependencies
+npm install
+
+# Configure environment variables
+cp .env.example .env
+# Edit .env with your API keys
+
+# Run the application
+npm start</code></pre>
+
+    <h3>Environment Variables</h3>
+    <table>
+      <thead><tr><th>Variable</th><th>Description</th></tr></thead>
+      <tbody>
+        <tr><td><code>SLACK_BOT_TOKEN</code></td><td>Slack bot token (starts with <code>xoxb-</code>)</td></tr>
+        <tr><td><code>SLACK_APP_TOKEN</code></td><td>Slack app-level token (starts with <code>xapp-</code>)</td></tr>
+        <tr><td><code>WATSONX_API_KEY</code></td><td>IBM watsonx API key</td></tr>
+        <tr><td><code>NEWS_API_KEY</code></td><td>News data source API key</td></tr>
+        <tr><td><code>MARKET_DATA_API_KEY</code></td><td>Market data source API key</td></tr>
+      </tbody>
+    </table>
+
+    <h3>Running Tests</h3>
+<pre><code># Run all tests
+npm test
+
+# Run specific suite
+npm test -- agents
+
+# Run with coverage
+npm run test:coverage</code></pre>
+  </section>
+
+  <!-- SLACK COMMANDS -->
+  <section id="commands">
+    <h2>Slack Commands</h2>
+    <p>Once the bot is running and added to your Slack workspace, use these commands:</p>
+    <div class="cmd-list">
+      <div class="cmd-item">/oilgasbot any relevant news regarding ExxonMobil?</div>
+      <div class="cmd-item">/oilgasbot give me current oil and gas monitor</div>
+      <div class="cmd-item">/oilgasbot prep me for a meeting with Halliburton</div>
+      <div class="cmd-item">/oilgasbot show top oil and gas opportunities this week</div>
+      <div class="cmd-item">/oilgasbot alert me on major Chevron updates</div>
+    </div>
+  </section>
+
+  <!-- GIT WORKFLOW -->
+  <section id="workflow">
+    <h2>Git Workflow for the Team</h2>
+    <p>Everyone on the team should follow this workflow to keep the repo clean and conflict-free.</p>
+
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><div><strong>Clone the repo</strong><span><code>git clone git@github.com:IBMAyush/WatsonXChallenge.git</code></span></div></div>
+      <div class="step"><div class="step-num">2</div><div><strong>Always pull before starting work</strong><span><code>git pull origin main</code> — gets the latest changes from everyone else.</span></div></div>
+      <div class="step"><div class="step-num">3</div><div><strong>Create a feature branch</strong><span><code>git checkout -b feature/your-feature-name</code> — never commit directly to main.</span></div></div>
+      <div class="step"><div class="step-num">4</div><div><strong>Stage and commit your changes</strong><span><code>git add .</code> then <code>git commit -m "Add feature: clear description"</code></span></div></div>
+      <div class="step"><div class="step-num">5</div><div><strong>Push your branch</strong><span><code>git push -u origin feature/your-feature-name</code></span></div></div>
+      <div class="step"><div class="step-num">6</div><div><strong>Open a Pull Request on GitHub</strong><span>Go to <a href="https://github.com/IBMAyush/WatsonXChallenge">github.com/IBMAyush/WatsonXChallenge</a>, open a PR from your branch into main, get it reviewed, then merge.</span></div></div>
+    </div>
+
+    <h3>Quick Reference</h3>
+    <table>
+      <thead><tr><th>Action</th><th>Command</th></tr></thead>
+      <tbody>
+        <tr><td>Check status</td><td><code>git status</code></td></tr>
+        <tr><td>Stage all files</td><td><code>git add .</code></td></tr>
+        <tr><td>Commit</td><td><code>git commit -m "message"</code></td></tr>
+        <tr><td>Push branch</td><td><code>git push origin branch-name</code></td></tr>
+        <tr><td>Pull latest</td><td><code>git pull origin main</code></td></tr>
+        <tr><td>Create branch</td><td><code>git checkout -b branch-name</code></td></tr>
+        <tr><td>View history</td><td><code>git log --oneline</code></td></tr>
+      </tbody>
+    </table>
+
+    <h3>Troubleshooting</h3>
+    <p>If your push is rejected, someone else pushed first. Run <code>git pull origin main</code>, resolve any conflicts, then push again. If you need help with SSH setup, check that <code>~/.ssh/id_ed25519.pub</code> exists and is added to your GitHub account under <strong>Settings → SSH Keys</strong>.</p>
+  </section>
+
+</div>
+
+<footer>
+  <p><a href="https://github.com/IBMAyush/WatsonXChallenge">github.com/IBMAyush/WatsonXChallenge</a> &nbsp;·&nbsp; IBM Internal Use Only &nbsp;·&nbsp; Built for the WatsonX Challenge</p>
+  <p style="margin-top:8px;">Made with IBM Bob</p>
+</footer>
+
+</body>
+</html>
